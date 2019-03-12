@@ -54,6 +54,19 @@ Again, hit 'enter' to use the default. It then prints a welcome message and
 is ready to accept BASIC commands and code. You can find out more about
 how to use this version of BASIC here: https://www.pcjs.org/docs/c1pjs/
 
+## Boot ROM
+
+The 4kB ROM located at $f000 - $ffff contains the various reset/interrupt
+vectors, initialization code and serial I/O routines needed to support
+BASIC. It's extremely stripped-down and just handles character input, output
+and Control-C checking - the load and save vectors are currently stubbed out.
+
+You can revise this ROM with your own additional support code, or to reduce the
+size of the ROM to free up resources for more RAM - you'll need to edit the
+linker script to change the memory sizes, as well as modify the rom_monitor.s
+file with code changes. The cc65 assembler and linker are required to put it
+all together into the final .hex file needed by the FPGA build.
+
 ## Simulating
 
 Simulation is supported and requires the following prerequisites:
