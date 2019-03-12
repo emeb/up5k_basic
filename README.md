@@ -92,7 +92,7 @@ purposes only. The full source code for this can be found at:
 https://github.com/brajeshwar/Microsoft-BASIC-for-6502-Original-Source-Code-1978
 
 The ROM files from which I created the .hex file are also available in many
-places - I used this archive: http://www.osiweb.org/software.html
+places - I used this archive: http://www.osiweb.org/misc/OSI600_RAM_ROM.zip
 
 ## Thanks
 
