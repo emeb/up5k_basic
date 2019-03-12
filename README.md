@@ -45,12 +45,12 @@ uppercase) and then BASIC will start running. It will prompt you:
 
     MEMORY SIZE?
 
-to which you answer with a <cr> to let it use all memory. It then prompts
+to which you answer with 'enter' to let it use all memory. It then prompts
 with:
 
     TERMINAL WIDTH?
 
-Again, hit <cr> to use the default. It then prints a welcome message and
+Again, hit 'enter' to use the default. It then prints a welcome message and
 is ready to accept BASIC commands and code. You can find out more about
 how to use this version of BASIC here: https://www.pcjs.org/docs/c1pjs/
 
