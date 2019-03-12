@@ -82,6 +82,18 @@ To simulate, use the following commands
 
 This will build the simulation executable, run it and then view the output.
 
+## Copyright
+
+There have been questions raised about the copyright status of the MS BASIC
+provided in this project. To the best of my knowledge, the contents of the file
+src/basic_8k.hex is still property of Microsoft and is used here for educational
+purposes only. The full source code for this can be found at:
+
+https://github.com/brajeshwar/Microsoft-BASIC-for-6502-Original-Source-Code-1978
+
+The ROM files from which I created the .hex file are also available in many
+places - I used this archive: http://www.osiweb.org/software.html
+
 ## Thanks
 
 Thanks to the developers of all the tools used for this, as well as the authors
