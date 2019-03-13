@@ -1,7 +1,7 @@
 # up5k_basic
 A small 6502 system with MS BASIC in ROM. This system
 includes 32kB SRAM (using one of the four available SPRAM cores), 8 bits
-input, 8 bits output, a 9600bps serial I/O port and 12kB of ROM that's
+input, 8 bits output, a 115200bps serial I/O port and 12kB of ROM that's
 split into 4kB for startup and I/O support and 8kB which is a copy of the
 Ohio Scientific C1P 8k Microsoft BASIC.
 
@@ -34,7 +34,7 @@ target of the Makefile in the icestorm directory to match your own hardware.
 
 ## Running BASIC
 
-You will need to connect a 9600bps serial terminal port to the TX/RX pins of
+You will need to connect a 115200bps serial terminal port to the TX/RX pins of
 the FPGA (depends on your .pcf definitions - pins 3/4 in my build for the
 upduino). Load the bitstream an you'll see the boot prompt:
 
