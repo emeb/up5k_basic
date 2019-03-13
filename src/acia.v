@@ -115,8 +115,8 @@ module acia(
 	// instantiate the simplified UART core
 	wire is_receiving;	// unused
     uart #(
-        .baud_rate(9600),            // default is 9600
-        .sys_clk_freq(12000000)      // default is 100000000
+        .baud_rate(115200),            // default is 9600
+        .sys_clk_freq(16000000)      // default is 100000000
      )
     uart_i(
         .clk(clk),                        // The master clock for this module
