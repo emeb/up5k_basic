@@ -10,6 +10,7 @@ module tb_tst_6502;
 	reg [7:0] gpio_i;
 	reg RX;
     wire TX;
+	wire luma, sync;
     
     // clock source
     always
@@ -34,7 +35,7 @@ module tb_tst_6502;
         
 `ifdef icarus
         // stop after 1 sec
-		#1000000 $finish;
+		#100000000 $finish;
 `endif
     end
     
@@ -42,6 +43,8 @@ module tb_tst_6502;
     tst_6502 uut(
         .clk(clk),              // 4.028MHz dot clock
         .reset(reset),          // Low-true reset
+		.luma(luma),			// video luminance
+		.sync(sync),			// video sync
         .gpio_o(gpio_o),        // gpio output
         .gpio_i(gpio_i),        // gpio input
         .RX(RX),                // serial input

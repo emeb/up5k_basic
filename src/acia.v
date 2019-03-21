@@ -63,6 +63,7 @@ module acia(
 	
 	// tx empty is cleared when transmit starts, cleared when is_transmitting deasserts
 	reg txe;
+	wire is_transmitting;
 	reg prev_is_transmitting;
 	always @(posedge clk)
 	begin

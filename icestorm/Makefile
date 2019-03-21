@@ -6,7 +6,7 @@
 VPATH = ../src
 
 SRC =	up5k_basic_top.v ../src/tst_6502.v ../src/acia.v ../src/ram_32kb.v \
-		../src/rom_basic_8kB.v \
+		../src/rom_basic_8kB.v ../src/video.v ../src/rom_cg_2kB.v \
         ../verilog-6502/cpu.v ../verilog-6502/ALU.v \
         ../osdvu/uart.v
 
@@ -37,7 +37,7 @@ HEXDUMP_ARGS = -v -e '1/1 "%02x " "\n"'
 all: $(PROJ).bin
 
 $(FAKE_HEX):
-	$(ICEBRAM) -g 8 4096 > $(FAKE_HEX)
+	$(ICEBRAM) -g 8 2048 > $(FAKE_HEX)
 
 %.json: $(SRC) $(FAKE_HEX)
 	$(YOSYS) -p 'synth_ice40 -top $(PROJ) -json $@' $(SRC)

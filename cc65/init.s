@@ -1,13 +1,14 @@
 ; ---------------------------------------------------------------------------
-; monitor_rom.s
+; init.s - 6502 + BASIC initializer & support code
 ; ---------------------------------------------------------------------------
 ;
 
-.define		ACIA_CTRL $E000			; ACIA control register location
-.define		ACIA_DATA $E001			; ACIA data register location
-
-.export		_acia_tx_chr
-.export		_acia_rx_chr
+.import		_acia_init
+.import		_acia_tx_chr
+.import		_acia_rx_chr
+.import		_acia_rx_nb
+.import		_video_init
+.import		_video_out
 
 .segment	"BAS_VEC"
 
@@ -18,76 +19,80 @@ ctrl_c_vec:	.word		$0000
 load_vec:	.word		$0000
 save_vec:	.word		$0000
 
-
 .segment	"CODE"
 
 ; ---------------------------------------------------------------------------
 ; Reset vector
 
-_init:		LDX	#$28				; Initialize stack pointer to $0128
-			TXS
-			CLD						; Clear decimal mode
+_init:		ldx	#$28				; Initialize stack pointer to $0128
+			txs
+			cld						; Clear decimal mode
 
 ; ---------------------------------------------------------------------------
 ; Init jump tab
 
-			LDX #$0A				; init X 
-jmplp:		LDA init_tab,X
-			STA input_vec,X
-			DEX
-			BPL jmplp
+			ldx #$0A				; init X 
+jmplp:		lda init_tab,X
+			sta input_vec,X
+			dex
+			bpl jmplp
 
 ; ---------------------------------------------------------------------------
 ; Init ACIA
-
-			LDA #$03				; reset ACIA
-			STA ACIA_CTRL
-			LDA #$00				; normal operation
-			STA ACIA_CTRL
+			jsr _acia_init
 			
+; ---------------------------------------------------------------------------
+; Init video
+			jsr _video_init
+
 ; ---------------------------------------------------------------------------
 ; display boot prompt
 
-			LDX #$00
-bplp:		LDA bootprompt,X		; get char
-			BEQ bpdone				; final null?
-			JSR _acia_tx_chr		; send char
-			INX
-			BNE bplp				; back to start
+			ldx #$00
+bplp:		lda bootprompt,X		; get char
+			beq bpdone				; final null?
+			jsr _output				; send char
+			inx
+			bne bplp				; back to start
 
 ; ---------------------------------------------------------------------------
 ; Cold or Warm Start
 
 bpdone:
-			JSR _acia_rx_chr		; get char
-			CMP #$43				; C ?
-			BNE bp_skip_C
-			JMP $BD11				; BASIC Cold Start
-bp_skip_C:	CMP #$57				; W ?
-			BNE bpdone
-			JMP $0000				; BASIC Warm Start
+			jsr _acia_rx_chr		; get char
+			cmp #'C'				; C ?
+			bne bp_skip_C
+			jmp $BD11				; BASIC Cold Start
+bp_skip_C:	cmp #'W'				; W ?
+			bne bp_skip_W
+			jmp $0000				; BASIC Warm Start
+bp_skip_W:	cmp #'M'				; M ?
+			bne bpdone
+			jmp _monitor
 			
 ; ---------------------------------------------------------------------------
-; wait for TX empty and send single character to ACIA
+; Machine-language monitor 
 
-.proc _acia_tx_chr: near
-			pha						; temp save char to send
-txw:		lda	ACIA_CTRL			; wait for TX empty
-			and	#$02
-			beq	txw
-			pla						; restore char
-			sta	ACIA_DATA			; send
+.proc _monitor: near
+			jmp _init				; stubbed out to just restart
+.endproc
+
+; ---------------------------------------------------------------------------
+; BASIC input vector 
+
+.proc _input: near
+			jsr _acia_rx_chr
 			rts
 .endproc
 
 ; ---------------------------------------------------------------------------
-; wait for RX full and get single character from ACIA
+; BASIC output vector 
 
-.proc _acia_rx_chr: near
-rxw:		lda	ACIA_CTRL			; wait for RX full
-			and	#$01
-			beq	rxw
-			lda	ACIA_DATA			; receive
+.proc _output: near
+			pha
+			jsr _video_out
+			pla
+			jsr _acia_tx_chr
 			rts
 .endproc
 
@@ -95,10 +100,9 @@ rxw:		lda	ACIA_CTRL			; wait for RX full
 ; ctrl-c vector 
 
 .proc _ctrl_c: near
-			lda	ACIA_CTRL			; check for RX full
-			and	#$01
-			beq	ctrl_c_sk			; return if no new char
-			lda	ACIA_DATA			; receive char
+			jsr _acia_rx_nb			; check for char
+			cpx #1
+			bne	ctrl_c_sk			; return if no new char
 			cmp #$03				; check for ctrl-c
 			bne ctrl_c_sk			; return if not ctrl-c
 			jmp $A636				; ctrl-c handler
@@ -154,8 +158,8 @@ break:		JMP break				; If BRK is detected, something very bad
 ; BASIC vector init table
 
 init_tab:
-.addr		_acia_rx_chr			; input
-.addr		_acia_tx_chr			; output
+.addr		_input					; input
+.addr		_output					; output
 .addr		_ctrl_c					; ctrl-c
 .addr		_dummy					; load
 .addr		_dummy					; save
@@ -164,7 +168,17 @@ init_tab:
 ; Boot Prompt String
 
 bootprompt:
-.byte		10, 13, "C/W?", 0
+.byte		10, 13, "C/W/M?", 0
+
+; ---------------------------------------------------------------------------
+; table of data for video driver
+
+.segment  "VIDTAB"
+
+.byte		$40					; $FFE0 - default starting cursor location
+.byte		$1f					; $FFE1 - default width
+.byte		$00					; $FFE0 - vram size: 0 for 1k, !0 for 2k
+
 
 ; ---------------------------------------------------------------------------
 ; table of vectors for BASIC

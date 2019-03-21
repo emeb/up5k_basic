@@ -1,18 +1,20 @@
 [*]
-[*] GTKWave Analyzer v3.3.89 (w)1999-2018 BSI
-[*] Tue Mar  5 19:25:02 2019
+[*] GTKWave Analyzer v3.3.94 (w)1999-2018 BSI
+[*] Wed Mar 20 02:04:26 2019
 [*]
-[dumpfile] "/home/ericb/KBADC/lattice/up5k_6502/icarus/tb_tst_6502.vcd"
-[dumpfile_mtime] "Tue Mar  5 19:23:37 2019"
-[dumpfile_size] 1548624
-[savefile] "/home/ericb/KBADC/lattice/up5k_6502/icarus/tb_tst_6502.gtkw"
+[dumpfile] "/home/ericb/KBADC/lattice/up5k_basic/icarus/tb_tst_6502.vcd"
+[dumpfile_mtime] "Wed Mar 20 02:01:00 2019"
+[dumpfile_size] 1899096
+[savefile] "/home/ericb/KBADC/lattice/up5k_basic/icarus/tb_tst_6502.gtkw"
 [timestart] 0
 [size] 1526 600
 [pos] -1 -1
-*-28.000000 1001000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-28.000000 418000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb_tst_6502.
-[sst_width] 212
-[signals_width] 126
+[treeopen] tb_tst_6502.uut.
+[treeopen] tb_tst_6502.uut.uvid.
+[sst_width] 219
+[signals_width] 134
 [sst_expanded] 1
 [sst_vpaned_height] 144
 @22
@@ -26,7 +28,6 @@ tb_tst_6502.uut.clk
 tb_tst_6502.uut.gpio_do[7:0]
 tb_tst_6502.uut.gpio_i[7:0]
 tb_tst_6502.uut.gpio_o[7:0]
-tb_tst_6502.uut.mux_sel[3:0]
 tb_tst_6502.uut.ram_do[7:0]
 @28
 tb_tst_6502.uut.reset
@@ -40,5 +41,29 @@ tb_tst_6502.uut.ram_sel
 tb_tst_6502.uut.gpio_sel
 tb_tst_6502.uut.acia_sel
 tb_tst_6502.uut.rom_sel
+tb_tst_6502.luma
+tb_tst_6502.sync
+@200
+-video
+@28
+tb_tst_6502.uut.uvid.reset
+tb_tst_6502.uut.uvid.clk
+@22
+tb_tst_6502.uut.uvid.hcnt[9:0]
+tb_tst_6502.uut.uvid.vcnt[8:0]
+@28
+tb_tst_6502.uut.uvid.hs
+tb_tst_6502.uut.uvid.vs
+tb_tst_6502.uut.uvid.active
+tb_tst_6502.uut.uvid.dcnt[1:0]
+tb_tst_6502.uut.uvid.pixena
+tb_tst_6502.uut.uvid.vload
+@22
+tb_tst_6502.uut.uvid.haddr[4:0]
+@28
+tb_tst_6502.uut.uvid.cline[2:0]
+@22
+tb_tst_6502.uut.uvid.vaddr[4:0]
+tb_tst_6502.uut.uvid.vid_addr[9:0]
 [pattern_trace] 1
 [pattern_trace] 0

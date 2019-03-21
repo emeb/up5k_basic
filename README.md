@@ -1,9 +1,14 @@
 # up5k_basic
 A small 6502 system with MS BASIC in ROM. This system
-includes 32kB SRAM (using one of the four available SPRAM cores), 8 bits
-input, 8 bits output, a 115200bps serial I/O port and 12kB of ROM that's
-split into 4kB for startup and I/O support and 8kB which is a copy of the
-Ohio Scientific C1P 8k Microsoft BASIC.
+includes the following features:
+
+* 32kB SRAM (using one of the four available SPRAM cores)
+* 8 bits input, 8 bits output
+* 115200bps serial I/O port
+* NTSC composite video with 1kB video RAM and 2kB character ROM
+* 2kB ROM for startup and I/O support
+* 8kB ROM for Ohio Scientific C1P Microsoft BASIC
+* 2kB ROM for the video character generator
 
 ## prerequisites
 To build this you will need the following FPGA tools
@@ -28,8 +33,8 @@ You will also need the following 6502 tools to build the startup ROM:
 
 ## Loading
 
-I built this system on a upduino and programmed it with a custom USB->SPI
-board that I built so you will definitely need to tweak the programming
+I built this system on a custom up5k board and programmed it with a custom
+USB->SPI board that I built so you will definitely need to tweak the programming
 target of the Makefile in the icestorm directory to match your own hardware.
 
 ## Running BASIC
@@ -38,7 +43,7 @@ You will need to connect a 115200bps serial terminal port to the TX/RX pins of
 the FPGA (depends on your .pcf definitions - pins 3/4 in my build for the
 upduino). Load the bitstream an you'll see the boot prompt:
 
-    C/W?
+    C/W/M?
 
 This is asking if you're doing a cold or warm start. Hit "C" (must be
 uppercase) and then BASIC will start running. It will prompt you:
@@ -56,7 +61,7 @@ how to use this version of BASIC here: https://www.pcjs.org/docs/c1pjs/
 
 ## Boot ROM
 
-The 4kB ROM located at $f000 - $ffff contains the various reset/interrupt
+The 2kB ROM located at $f800 - $ffff contains the various reset/interrupt
 vectors, initialization code and serial I/O routines needed to support
 BASIC. It's extremely stripped-down and just handles character input, output
 and Control-C checking - the load and save vectors are currently stubbed out.
@@ -66,6 +71,20 @@ size of the ROM to free up resources for more RAM - you'll need to edit the
 linker script to change the memory sizes, as well as modify the rom_monitor.s
 file with code changes. The cc65 assembler and linker are required to put it
 all together into the final .hex file needed by the FPGA build.
+
+## Video
+
+A late addition to the design is a simple NTSC composite video generator which
+is based on the original Ohio Scientific C1P system. The luma and sync output
+bits should be combined by running sync thru a 330 ohm resistor and luma thru a
+560 ohm resistor to a common node driving a 75 ohm baseband composite video
+load. This will generate a 262-line 60fps progressive-scanned NTSC-compatible
+signal which should work with most modern NTSC-capable video displays.
+
+The video generation has been upgraded from the OSI 24x24 display to support
+32 characters wide by 27 lines high plus overscan and uses the original OSI
+character generator, complete with all the unique gaming glyphs like tanks,
+cars and spaceships.
 
 ## Simulating
 

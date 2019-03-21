@@ -2,7 +2,7 @@
 # 03-04-19 E. Brombaugh
 
 # C and assy source files
-SRC =	monitor_rom.s
+SRC =	init.s acia.s video.s
 
 # compiler output
 OBJ = rom
