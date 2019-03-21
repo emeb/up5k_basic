@@ -10,6 +10,8 @@ includes the following features:
 * 8kB ROM for Ohio Scientific C1P Microsoft BASIC
 * 2kB ROM for the video character generator
 
+![screenshot](screenshot.png)
+
 ## prerequisites
 To build this you will need the following FPGA tools
 
