@@ -86,7 +86,9 @@ signal which should work with most modern NTSC-capable video displays.
 The video generation has been upgraded from the OSI 24x24 display to support
 32 characters wide by 27 lines high plus overscan and uses the original OSI
 character generator, complete with all the unique gaming glyphs like tanks,
-cars and spaceships.
+cars and spaceships as shown in this rendering:
+
+![characters](chargen1x.png)
 
 ## Simulating
 
