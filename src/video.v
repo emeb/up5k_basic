@@ -1,4 +1,5 @@
-// video_2.v - 1k byte video buffer & drive logic - 2nd generation w/ better timing
+// video.v - 1k byte video buffer & drive logic
+// 2nd generation w/ better timing, no chars in overscan region
 // 03-19-19 E. Brombaugh
 
 module VIDEO(

@@ -47,12 +47,18 @@ set_io gpio_i[7] 45
 set_io RX 27
 set_io TX 28
 
+set_io spi0_mosi 25
+set_io spi0_miso 26
+set_io spi0_sclk 21
+set_io spi0_cs0 23
+
 set_io luma 19
 set_io sync 20
 
 set_io tst_rst 43
 set_io tst_clk 18
 set_io tst_irq 13
+set_io tst_rdy 12
 
 set_io RGB0 39
 set_io RGB1 40

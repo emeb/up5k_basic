@@ -2,6 +2,7 @@
 // 02-11-19 E. Brombaugh
 
 `timescale 1ns/1ps
+`default_nettype none
 
 module tb_tst_6502;
     reg clk;
@@ -11,7 +12,9 @@ module tb_tst_6502;
 	reg RX;
     wire TX;
 	wire luma, sync;
-    
+	wire CPU_IRQ, CPU_RDY;
+    wire spi0_mosi, spi0_miso, spi0_sclk, spi0_cs0;
+	
     // clock source
     always
         #125 clk = ~clk;
@@ -35,7 +38,7 @@ module tb_tst_6502;
         
 `ifdef icarus
         // stop after 1 sec
-		#100000000 $finish;
+		#1000000 $finish;
 `endif
     end
     
@@ -48,6 +51,12 @@ module tb_tst_6502;
         .gpio_o(gpio_o),        // gpio output
         .gpio_i(gpio_i),        // gpio input
         .RX(RX),                // serial input
-        .TX(TX)                 // serial output
+        .TX(TX),                // serial output
+		.spi0_mosi(spi0_mosi),	// SPI core 0
+		.spi0_miso(spi0_miso),
+		.spi0_sclk(spi0_sclk),
+		.spi0_cs0(spi0_cs0),
+		.CPU_IRQ(CPU_IRQ),		// diagnostic
+		.CPU_RDY(CPU_RDY)		// diagnostic
     );
 endmodule

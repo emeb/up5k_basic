@@ -9,6 +9,8 @@
 .import		_acia_rx_nb
 .import		_video_init
 .import		_video_out
+.import		_spi_init
+.import		_spi_txrx
 
 .segment	"BAS_VEC"
 
@@ -46,6 +48,10 @@ jmplp:		lda init_tab,X
 			jsr _video_init
 
 ; ---------------------------------------------------------------------------
+; Init spi
+			jsr _spi_init
+
+; ---------------------------------------------------------------------------
 ; display boot prompt
 
 			ldx #$00
@@ -71,10 +77,11 @@ bp_skip_W:	cmp #'M'				; M ?
 			jmp _monitor
 			
 ; ---------------------------------------------------------------------------
-; Machine-language monitor 
+; Machine-language monitor - temp used for testing SPI 
 
 .proc _monitor: near
-			jmp _init				; stubbed out to just restart
+			jsr _spi_txrx
+			jmp _monitor			; endless loop on spi txrx
 .endproc
 
 ; ---------------------------------------------------------------------------

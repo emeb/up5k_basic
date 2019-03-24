@@ -1,6 +1,7 @@
 // u4k_basic_top.v - top level for tst_6502 in up5k
 // 03-02-19 E. Brombaugh
 
+`default_nettype none
 
 module up5k_basic_top(
 	// 16MHz clock osc
@@ -18,50 +19,38 @@ module up5k_basic_top(
     input RX,
     output TX,
 	
+	// SPI0 port
+	inout	spi0_mosi,
+			spi0_miso,
+			spi0_sclk,
+			spi0_cs0,
+	
     // diagnostics
     output tst_rst,
     output tst_clk,
     output tst_irq,
+	output tst_rdy,
 	
 	// LED - via drivers
-	output RGB0, RGB1, RGB2 // RGB LED outs
+	output RGB0, RGB1, RGB2
 );
-//`define CLOCK_12MHZ
-`ifdef CLOCK_12MHZ
-	// 12MHz on-chip clock generator
-	wire clk_48;
-
-	SB_HFOSC inthosc (
-		.CLKHFPU(1'b1),
-		.CLKHFEN(1'b1),
-		.CLKHF(clk_48)
-	);
-	
-	// clock divider generates 50% duty 12MHz clock
-	reg [1:0] cnt;
-	initial
-        cnt <= 2'b00;
-        
-	always @(posedge clk_48)
-	begin
-        cnt <= cnt + 2'b01;
-	end
-    wire clk = cnt[1];
-`else
-//`define USE_PLL
+`define USE_PLL
 `ifdef USE_PLL
-	// internal 48MHz -> 16MHz w/ PLL
-	wire clk_48;
+	// internal 16MHz -> 16MHz w/ PLL
+	
+	// tried w/ on-chip reference but it's very noisy
+	// and results in wiggly video
+	//wire clk_48;
 
-	SB_HFOSC inthosc (
-		.CLKHFPU(1'b1),
-		.CLKHFEN(1'b1),
-		.CLKHF(clk_48)
-	);
+	//SB_HFOSC inthosc (
+	//	.CLKHFPU(1'b1),
+	//	.CLKHFEN(1'b1),
+	//	.CLKHF(clk_48)
+	//);
 	
 	wire clk;
 	SB_PLL40_CORE pll_inst (
-		.REFERENCECLK(clk_48),
+		.REFERENCECLK(clk_16),
 		.PLLOUTCORE(clk),
 		.PLLOUTGLOBAL(),
 		.EXTFEEDBACK(),
@@ -74,8 +63,8 @@ module up5k_basic_top(
 		.SDO(),
 		.SCLK()
 	);  
-	// Fin=48, Fout=16
-	defparam pll_inst.DIVR = 4'b0010;
+	// Fin=16, Fout=16
+	defparam pll_inst.DIVR = 4'b0000;
 	defparam pll_inst.DIVF = 7'b0111111;
 	defparam pll_inst.DIVQ = 3'b110;
 	defparam pll_inst.FILTER_RANGE = 3'b001;
@@ -90,7 +79,6 @@ module up5k_basic_top(
 `else
 	// external 16MHz clock generator
 	wire clk = clk_16;
-`endif
 `endif
 
 	// reset generator waits > 10us
@@ -124,8 +112,14 @@ module up5k_basic_top(
     
         .RX(RX),
         .TX(TX),
+	
+		.spi0_mosi(spi0_mosi),
+		.spi0_miso(spi0_miso),
+		.spi0_sclk(spi0_sclk),
+		.spi0_cs0(spi0_cs0),
     
-        .CPU_IRQ(tst_irq)
+        .CPU_IRQ(tst_irq),
+		.CPU_RDY(tst_rdy)
 	);
     
 	// RGB LED Driver from top 3 bits of gpio
@@ -145,49 +139,9 @@ module up5k_basic_top(
 		.RGB2(RGB2)
 	);
     
-//`define OD_VIDEO
-`ifdef OD_VIDEO	
-	// video outputs are OD
-	SB_IO #(
-		.PIN_TYPE(6'b101001),
-		.PULLUP(1'b1),
-		.NEG_TRIGGER(1'b0),
-		.IO_STANDARD("SB_LVCMOS")
-	) io_luma_I (
-		.PACKAGE_PIN(luma),
-		.LATCH_INPUT_VALUE(1'b0),
-		.CLOCK_ENABLE(1'b0),
-		.INPUT_CLK(1'b0),
-		.OUTPUT_CLK(1'b0),
-		.OUTPUT_ENABLE(~raw_luma),
-		.D_OUT_0(1'b0),
-		.D_OUT_1(1'b0),
-		.D_IN_0(),
-		.D_IN_1()
-	);
-	
-	SB_IO #(
-		.PIN_TYPE(6'b101001),
-		.PULLUP(1'b1),
-		.NEG_TRIGGER(1'b0),
-		.IO_STANDARD("SB_LVCMOS")
-	) io_sync_I (
-		.PACKAGE_PIN(sync),
-		.LATCH_INPUT_VALUE(1'b0),
-		.CLOCK_ENABLE(1'b0),
-		.INPUT_CLK(1'b0),
-		.OUTPUT_CLK(1'b0),
-		.OUTPUT_ENABLE(~raw_sync),
-		.D_OUT_0(1'b0),
-		.D_OUT_1(1'b0),
-		.D_IN_0(),
-		.D_IN_1()
-	);
-`else
 	// push/pull video outputs
 	assign luma = raw_luma;
 	assign sync = raw_sync;
-`endif
 
      // hook up diagnostics
     assign tst_rst = reset;

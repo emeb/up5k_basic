@@ -1,20 +1,20 @@
 [*]
 [*] GTKWave Analyzer v3.3.94 (w)1999-2018 BSI
-[*] Wed Mar 20 02:04:26 2019
+[*] Sun Mar 24 06:26:47 2019
 [*]
-[dumpfile] "/home/ericb/KBADC/lattice/up5k_basic/icarus/tb_tst_6502.vcd"
-[dumpfile_mtime] "Wed Mar 20 02:01:00 2019"
-[dumpfile_size] 1899096
-[savefile] "/home/ericb/KBADC/lattice/up5k_basic/icarus/tb_tst_6502.gtkw"
+[dumpfile] "/home/ericb/Engineering/KBADC/lattice/up5k_basic/icarus/tb_tst_6502.vcd"
+[dumpfile_mtime] "Sun Mar 24 06:10:06 2019"
+[dumpfile_size] 1818133
+[savefile] "/home/ericb/Engineering/KBADC/lattice/up5k_basic/icarus/tb_tst_6502.gtkw"
 [timestart] 0
-[size] 1526 600
+[size] 1366 669
 [pos] -1 -1
-*-28.000000 418000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-23.000000 14875000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb_tst_6502.
 [treeopen] tb_tst_6502.uut.
 [treeopen] tb_tst_6502.uut.uvid.
 [sst_width] 219
-[signals_width] 134
+[signals_width] 187
 [sst_expanded] 1
 [sst_vpaned_height] 144
 @22
@@ -23,6 +23,8 @@ tb_tst_6502.uut.CPU_DI[7:0]
 tb_tst_6502.uut.CPU_DO[7:0]
 @28
 tb_tst_6502.uut.CPU_WE
+tb_tst_6502.uut.CPU_IRQ
+tb_tst_6502.uut.CPU_RDY
 tb_tst_6502.uut.clk
 @22
 tb_tst_6502.uut.gpio_do[7:0]
@@ -34,12 +36,14 @@ tb_tst_6502.uut.reset
 @22
 tb_tst_6502.uut.rom_do[7:0]
 tb_tst_6502.uut.acia_do[7:0]
+tb_tst_6502.uut.wb_do[7:0]
 @28
 tb_tst_6502.uut.RX
 tb_tst_6502.uut.TX
 tb_tst_6502.uut.ram_sel
 tb_tst_6502.uut.gpio_sel
 tb_tst_6502.uut.acia_sel
+tb_tst_6502.uut.wb_sel
 tb_tst_6502.uut.rom_sel
 tb_tst_6502.luma
 tb_tst_6502.sync
@@ -65,5 +69,44 @@ tb_tst_6502.uut.uvid.cline[2:0]
 @22
 tb_tst_6502.uut.uvid.vaddr[4:0]
 tb_tst_6502.uut.uvid.vid_addr[9:0]
+@201
+-sysbus
+@22
+tb_tst_6502.uut.usysbus.addr[7:0]
+@28
+tb_tst_6502.uut.usysbus.clk
+tb_tst_6502.uut.usysbus.cs
+@22
+tb_tst_6502.uut.usysbus.din[7:0]
+tb_tst_6502.uut.usysbus.dout[7:0]
+@28
+tb_tst_6502.uut.usysbus.irq
+tb_tst_6502.uut.usysbus.mcsno_00
+tb_tst_6502.uut.usysbus.mcsnoe_00
+tb_tst_6502.uut.usysbus.mi_0
+tb_tst_6502.uut.usysbus.mo_0
+tb_tst_6502.uut.usysbus.moe_0
+tb_tst_6502.uut.usysbus.rdy
+tb_tst_6502.uut.usysbus.rst
+tb_tst_6502.uut.usysbus.sbacko
+@22
+tb_tst_6502.uut.usysbus.sbadri[7:0]
+tb_tst_6502.uut.usysbus.sbdati[7:0]
+tb_tst_6502.uut.usysbus.sbdato[7:0]
+@28
+tb_tst_6502.uut.usysbus.sbrwi
+tb_tst_6502.uut.usysbus.sbstbi
+tb_tst_6502.uut.usysbus.scki_0
+tb_tst_6502.uut.usysbus.scko_0
+tb_tst_6502.uut.usysbus.sckoe_0
+tb_tst_6502.uut.usysbus.scsni_0
+tb_tst_6502.uut.usysbus.si_0
+tb_tst_6502.uut.usysbus.so_0
+tb_tst_6502.uut.usysbus.soe_0
+tb_tst_6502.uut.usysbus.spi0_cs0
+tb_tst_6502.uut.usysbus.spi0_miso
+tb_tst_6502.uut.usysbus.spi0_mosi
+tb_tst_6502.uut.usysbus.spi0_sclk
+tb_tst_6502.uut.usysbus.we
 [pattern_trace] 1
 [pattern_trace] 0
