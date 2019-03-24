@@ -9,6 +9,7 @@ includes the following features:
 * 2kB ROM for startup and I/O support
 * 8kB ROM for Ohio Scientific C1P Microsoft BASIC
 * 2kB ROM for the video character generator
+* SPI port
 
 ![screenshot](screenshot.png)
 
@@ -76,7 +77,7 @@ all together into the final .hex file needed by the FPGA build.
 
 ## Video
 
-A late addition to the design is a simple NTSC composite video generator which
+This is a simple NTSC composite video generator which
 is based on the original Ohio Scientific C1P system. The luma and sync output
 bits should be combined by running sync thru a 330 ohm resistor and luma thru a
 560 ohm resistor to a common node driving a 75 ohm baseband composite video
@@ -89,6 +90,17 @@ character generator, complete with all the unique gaming glyphs like tanks,
 cars and spaceships as shown in this rendering:
 
 ![characters](chargen1x.png)
+
+## SPI
+
+The iCE40 Ultra Plus features two SPI and two I2C ports as hard IP cores that
+are accessible through a "system bus" that's similar to the popular Wishbone
+standard. I've added a 6502 to Wishbone bridge mapped to addresses $F100-$F1FF
+which provides access to all four cores. Currently only the SPI core at
+addresses $F106-$F10F is connected but I've tested it and added some bare-bones
+access routines in the support ROM. At the time of this commit the support for
+the SPI and I2C cores is only available in an experimental branch of the
+nextpnr tool, but it expected in mainline shortly.
 
 ## Simulating
 
