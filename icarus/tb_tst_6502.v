@@ -38,7 +38,7 @@ module tb_tst_6502;
         
 `ifdef icarus
         // stop after 1 sec
-		#1000000 $finish;
+		#10000000 $finish;
 `endif
     end
     

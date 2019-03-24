@@ -71,16 +71,18 @@ module tst_6502(
 	
 	// 1kB Video RAM @ D000-D3FF
 	wire [7:0] video_do;
+	wire vid_rdy;
 	VIDEO uvid(
-		.clk(clk),
-		.reset(reset),
-		.sel(video_sel),
-		.we(CPU_WE),
-		.addr(CPU_AB[9:0]),
-		.din(CPU_DO),
-		.dout(video_do),
-		.luma(luma),
-		.sync(sync)
+		.clk(clk),				// system clock
+		.reset(reset),			// system reset
+		.sel(video_sel),		// chip select
+		.we(CPU_WE),			// write enable
+		.addr(CPU_AB[9:0]),		// address
+		.din(CPU_DO),			// data bus input
+		.dout(video_do),		// data bus output
+		.luma(luma),			// video luminance
+		.sync(sync),			// video sync
+		.rdy(vid_rdy)			// processor stall
 	);
 		
 	// 1kB GPIO @ DC00-DFFF
@@ -99,7 +101,7 @@ module tst_6502(
 		.rst(reset),			// system reset
 		.cs(acia_sel),			// chip select
 		.we(CPU_WE),			// write enable
-		.rs(CPU_AB[0]),			// register select
+		.rs(CPU_AB[0]),			// address
 		.rx(RX),				// serial receive
 		.din(CPU_DO),			// data bus input
 		.dout(acia_do),			// data bus output
@@ -109,16 +111,16 @@ module tst_6502(
 	
 	// 256B Wishbone bus master and SB IP cores @ F100-F1FF
 	wire [7:0] wb_do;
-	wire wb_irq;
+	wire wb_irq, wb_rdy;
 	system_bus usysbus(
 		.clk(clk),				// system clock
 		.rst(reset),			// system reset
 		.cs(wb_sel),			// chip select
 		.we(CPU_WE),			// write enable
-		.addr(CPU_AB[7:0]),		// register select
+		.addr(CPU_AB[7:0]),		// address
 		.din(CPU_DO),			// data bus input
 		.dout(wb_do),			// data bus output
-		.rdy(CPU_RDY),			// processor stall
+		.rdy(wb_rdy),			// processor stall
 		.irq(wb_irq),			// interrupt request
 		.spi0_mosi(spi0_mosi),	// spi core 0 mosi
 		.spi0_miso(spi0_miso),	// spi core 0 miso
@@ -128,6 +130,9 @@ module tst_6502(
 	
 	// combine IRQs
 	assign CPU_IRQ = acia_irq | wb_irq;
+	
+	// combine RDYs
+	assign CPU_RDY = vid_rdy & wb_rdy;
 	
 	// 2kB ROM @ f800-ffff
 	reg [7:0] rom_mem[2047:0];
