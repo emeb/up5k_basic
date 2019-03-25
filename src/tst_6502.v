@@ -28,6 +28,9 @@ module tst_6502(
 	output	CPU_IRQ,		// diagnostic
 	output	CPU_RDY			// diagnostic
 );
+	// stuff needed throughout
+	reg [7:0] sysctl;
+	
 	// The 6502
 	wire [15:0] CPU_AB;
 	reg [7:0] CPU_DI;
@@ -48,7 +51,7 @@ module tst_6502(
 	// address decode
 	wire ram_sel = (CPU_AB[15] == 1'b0) ? 1 : 0;
 	wire basic_sel = ((CPU_AB[15:12] == 4'ha)||(CPU_AB[15:12] == 4'hb)) ? 1 : 0;
-	wire video_sel = (CPU_AB[15:10] == 6'h34) ? 1 : 0;
+	wire video_sel = ((CPU_AB[15:12] == 4'hD)||(CPU_AB[15:12] == 4'he)) ? 1 : 0;
 	wire acia_sel = (CPU_AB[15:8] == 8'hf0) ? 1 : 0;
 	wire wb_sel = (CPU_AB[15:8] == 8'hf1) ? 1 : 0;
 	wire gpio_sel = (CPU_AB[15:8] == 8'hf2) ? 1 : 0;
@@ -74,15 +77,17 @@ module tst_6502(
 		.dout(basic_do)
 	);
 	
-	// 1kB Video RAM @ D000-D3FF
+	// 8kB Video RAM @ D000-EFFF
 	wire [7:0] video_do;
 	wire vid_rdy;
 	VIDEO uvid(
 		.clk(clk),				// system clock
 		.reset(reset),			// system reset
+		.mode(sysctl[2]),		// text/graphic mode control
+		.bank(sysctl[1:0]),		// VRAM bank select
 		.sel(video_sel),		// chip select
 		.we(CPU_WE),			// write enable
-		.addr(CPU_AB[9:0]),		// address
+		.addr(CPU_AB[12:0]),	// address
 		.din(CPU_DO),			// data bus input
 		.dout(video_do),		// data bus output
 		.luma(luma),			// video luminance
@@ -131,13 +136,30 @@ module tst_6502(
 	// combine RDYs
 	assign CPU_RDY = vid_rdy & wb_rdy;
 	
-	// 256B GPIO @ F200-F2FF
+	// 256B GPIO & sysctl @ F200-F2FF
 	reg [7:0] gpio_do;
+	// write
 	always @(posedge clk)
-		if((CPU_WE == 1'b1) && (gpio_sel == 1'b1))
-			gpio_o <= CPU_DO;
+		if(reset)
+		begin
+			gpio_o <= 8'h00;
+			sysctl <= 8'h00;
+		end
+		else if((CPU_WE == 1'b1) && (gpio_sel == 1'b1))
+		begin
+			if(CPU_AB[0])
+				gpio_o <= CPU_DO;
+			else
+				sysctl <= CPU_DO;
+		end
+		
+	// read
 	always @(posedge clk)
-		gpio_do <= gpio_i;
+		if((CPU_WE == 1'b0) && (gpio_sel == 1'b1))
+			if(CPU_AB[0])
+				gpio_do <= gpio_i;
+			else
+				gpio_do <= sysctl;
 	
 	// LED PWM controller
 	wire [7:0] led_do;

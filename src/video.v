@@ -7,11 +7,13 @@
 module VIDEO(
 	input clk,					// 16MHz system clock
 	input reset,				// active high system reset
+	input mode,					// text/graphic mode control
+	input [1:0] bank,			// VRAM bank select
 	input sel,					// decoded video address
 	input we,					// write enable
-	input [9:0] addr,			// address
+	input [12:0] addr,			// address (8k range)
 	input [7:0] din,			// write data
-	output reg [7:0] dout,		// read data
+	output [7:0] dout,			// read data
 	output reg luma,			// video luminance signal
 	output reg sync,			// video sync signal
 	output reg rdy				// active low CPU stall
@@ -169,15 +171,18 @@ module VIDEO(
 	wire hs_dly = hs_pipe[2];
 	wire vs_dly = vs_pipe[2];
 	
-	// cpu writes to video memory
-	wire mem_we = sel & we;
+	// concatenate horizontal and vertical addresses to make vram address
+	wire [12:0] vid_addr = mode ? {vaddr,cline,haddr} : {3'b000,vaddr,haddr};
+	//wire [12:0] vid_addr = {3'b000,vaddr,haddr};
 	
-// uncomment this to enable arbitration
-`define VID_ARB
-
-`ifdef VID_ARB	
+	// invert msb of cpu addr due to decoding on D/E range
+	wire [12:0] cpu_addr = addr ^ 13'h1000;
+	
+	// cpu writes to video memory
+	wire cpu_we = sel & we;
+	
 	// generate cpu stall signal when cpu accesses memory while vid needs it
-	reg [9:0] stall_addr;
+	reg [12:0] stall_addr;
 	reg [7:0] stall_din;
 	reg stall_we;
 	wire pre_rdy = !(sel & vload & pixena);
@@ -185,51 +190,34 @@ module VIDEO(
 		if(!pre_rdy)
 		begin
 			rdy <= 1'b0;
-			stall_we <= mem_we;
+			stall_we <= cpu_we;
 			stall_din <= din;
-			stall_addr <= addr;
+			stall_addr <= cpu_addr;
 		end
 		else
 		begin
 			rdy <= 1'b1;
 			stall_we <= 1'b0;
 		end
-`else
-	// always ready
-	initial rdy <= 1'b1;
-`endif
 		
-	// video memory
-	reg [7:0] memory[0:1023];
+	// address mux selects video or CPU - video has priority and cpu stalls
+	wire [12:0] mem_addr = (vload & pixena) ? vid_addr : (rdy ? cpu_addr : stall_addr);
 	
-	// memory write uses write-only port
-	always @(posedge clk)
-`ifdef VID_ARB
-		if(pre_rdy & mem_we)
-				memory[addr] <= din;
-		else
-			if(!rdy & stall_we)
-				memory[stall_addr] <= stall_din;
-`else
-		if(mem_we)
-			memory[addr] <= din;
-`endif
+	// select write enable - live or stalled
+	wire mem_we = (pre_rdy & cpu_we) | (!(pre_rdy & cpu_we) & !rdy & stall_we);
 	
-	// concatenate horizontal and vertical addresses to make ram address
-	wire [9:0] vid_addr = {vaddr,haddr};
-	
-	// read address mux selects video or CPU
-`ifdef VID_ARB
-	// video has priority and cpu stalls
-	wire [9:0] mem_addr = (vload & pixena) ? vid_addr : (rdy ? addr : stall_addr);
-`else
-	// cpu has priority and video gets garbage
-	wire [9:0] mem_addr = sel ? addr : vid_addr;
-`endif
+	// select data source - live or stalled
+	wire [7:0] mem_din = (pre_rdy) ? din : stall_din;
 		
-	// memory read uses read-only port
-	always @(posedge clk)
-		dout <= memory[mem_addr];
+	// instantiated video memory
+	RAM_32kB uram(
+		.clk(clk),
+		.sel(1'b1),
+		.we(mem_we),
+		.addr({bank,mem_addr}),
+		.din(mem_din),
+		.dout(dout)
+	);
 	
 	// one pipe delay
 	
@@ -242,6 +230,14 @@ module VIDEO(
 		.dout(cg_dout)
 	);
 	
+	// graphics mode pass-thru
+	reg [7:0] gfx_dout;
+	always @(posedge clk)
+		gfx_dout <= dout;
+	
+	// mux CG or GFX
+	wire [7:0] vdat = mode ? gfx_dout : cg_dout;
+	
 	// two pipes delay
 		
 	// Video Shift Register
@@ -250,7 +246,7 @@ module VIDEO(
 		if(pixena_dly)
 		begin
 			if(vload_dly)
-				vid_shf_reg <= cg_dout;
+				vid_shf_reg <= vdat;
 			else 
 				vid_shf_reg <= {vid_shf_reg[6:0],1'b0};
 		end
