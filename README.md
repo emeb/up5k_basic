@@ -5,7 +5,8 @@ includes the following features:
 * 32kB SRAM (using one of the four available SPRAM cores)
 * 8 bits input, 8 bits output
 * 115200bps serial I/O port
-* NTSC composite video with 1kB video RAM and 2kB character ROM
+* NTSC composite video with text/glyph and graphic modes, 32kB video RAM and
+  original OSI 2kB character ROM
 * 2kB ROM for startup and I/O support
 * 8kB ROM for Ohio Scientific C1P Microsoft BASIC
 * 2kB ROM for the video character generator
@@ -80,13 +81,17 @@ all together into the final .hex file needed by the FPGA build.
 
 This is a simple NTSC composite video generator which
 is based on the original Ohio Scientific C1P system. The luma and sync output
-bits should be combined by running sync thru a 330 ohm resistor and luma thru a
-560 ohm resistor to a common node driving a 75 ohm baseband composite video
+bits should be combined by running sync thru a 560 ohm resistor and luma thru a
+330 ohm resistor to a common node driving a 75 ohm baseband composite video
 load. This will generate a 262-line 60fps progressive-scanned NTSC-compatible
 signal which should work with most modern NTSC-capable video displays.
 
-The video generation has been upgraded from the OSI 24x24 display to support
-32 characters wide by 27 lines high plus overscan and uses the original OSI
+The video generation has been upgraded from the OSI 24x24 display
+
+* Memory arbitration to prevent glitching when the 6502 accesses video RAM
+* 256 x 224 B/W pixel graphics mode
+* 4 pages text or graphics
+* 32 characters wide by 27 lines high plus overscan using the original OSI
 character generator, complete with all the unique gaming glyphs like tanks,
 cars and spaceships as shown in this rendering:
 
