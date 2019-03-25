@@ -10,6 +10,7 @@ includes the following features:
 * 8kB ROM for Ohio Scientific C1P Microsoft BASIC
 * 2kB ROM for the video character generator
 * SPI port
+* LED PWM driver
 
 ![screenshot](screenshot.png)
 
@@ -101,6 +102,11 @@ addresses $F106-$F10F is connected but I've tested it and added some bare-bones
 access routines in the support ROM. At the time of this commit the support for
 the SPI and I2C cores is only available in an experimental branch of the
 nextpnr tool, but it expected in mainline shortly.
+
+## LED PWM
+
+Many FPGAs in the iCE40 family provide hard IP cores for driving RGB LEDs. A
+simple interface to this is provided so the 6502 may control the LED driver.
 
 ## Simulating
 
