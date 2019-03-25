@@ -117,26 +117,13 @@ module up5k_basic_top(
 		.spi0_miso(spi0_miso),
 		.spi0_sclk(spi0_sclk),
 		.spi0_cs0(spi0_cs0),
+		
+		.rgb0(RGB0),
+		.rgb1(RGB1),
+		.rgb2(RGB2),
     
         .CPU_IRQ(tst_irq),
 		.CPU_RDY(tst_rdy)
-	);
-    
-	// RGB LED Driver from top 3 bits of gpio
-	SB_RGBA_DRV #(
-		.CURRENT_MODE("0b1"),
-		.RGB0_CURRENT("0b000001"),
-		.RGB1_CURRENT("0b000001"),
-		.RGB2_CURRENT("0b000001")
-	) RGBA_DRIVER (
-		.CURREN(1'b1),
-		.RGBLEDEN(1'b1),
-		.RGB0PWM(gpio_o[7]),
-		.RGB1PWM(gpio_o[6]),
-		.RGB2PWM(gpio_o[5]),
-		.RGB0(RGB0),
-		.RGB1(RGB1),
-		.RGB2(RGB2)
 	);
     
 	// push/pull video outputs

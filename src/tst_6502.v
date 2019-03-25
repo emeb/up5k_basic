@@ -21,6 +21,10 @@ module tst_6502(
 			spi0_sclk,
 			spi0_cs0,
 	
+	output	rgb0,			// LED drivers
+			rgb1,
+			rgb2,
+			
 	output	CPU_IRQ,		// diagnostic
 	output	CPU_RDY			// diagnostic
 );
@@ -45,9 +49,10 @@ module tst_6502(
 	wire ram_sel = (CPU_AB[15] == 1'b0) ? 1 : 0;
 	wire basic_sel = ((CPU_AB[15:12] == 4'ha)||(CPU_AB[15:12] == 4'hb)) ? 1 : 0;
 	wire video_sel = (CPU_AB[15:10] == 6'h34) ? 1 : 0;
-	wire gpio_sel = (CPU_AB[15:10] == 6'h37) ? 1 : 0;
 	wire acia_sel = (CPU_AB[15:8] == 8'hf0) ? 1 : 0;
 	wire wb_sel = (CPU_AB[15:8] == 8'hf1) ? 1 : 0;
+	wire gpio_sel = (CPU_AB[15:8] == 8'hf2) ? 1 : 0;
+	wire led_sel = (CPU_AB[15:8] == 8'hf3) ? 1 : 0;
 	wire rom_sel = (CPU_AB[15:11] == 5'h1f) ? 1 : 0;
 	
 	// 32kB RAM @ 0000-7FFF
@@ -85,14 +90,6 @@ module tst_6502(
 		.rdy(vid_rdy)			// processor stall
 	);
 		
-	// 1kB GPIO @ DC00-DFFF
-	reg [7:0] gpio_do;
-	always @(posedge clk)
-		if((CPU_WE == 1'b1) && (gpio_sel == 1'b1))
-			gpio_o <= CPU_DO;
-	always @(posedge clk)
-		gpio_do <= gpio_i;
-	
 	// 256B ACIA @ F000-F0FF
 	wire [7:0] acia_do;
 	wire acia_irq;
@@ -134,6 +131,29 @@ module tst_6502(
 	// combine RDYs
 	assign CPU_RDY = vid_rdy & wb_rdy;
 	
+	// 256B GPIO @ F200-F2FF
+	reg [7:0] gpio_do;
+	always @(posedge clk)
+		if((CPU_WE == 1'b1) && (gpio_sel == 1'b1))
+			gpio_o <= CPU_DO;
+	always @(posedge clk)
+		gpio_do <= gpio_i;
+	
+	// LED PWM controller
+	wire [7:0] led_do;
+	led_pwm uledpwm(
+		.clk(clk),				// system clock
+		.rst(reset),			// system reset
+		.cs(led_sel),			// chip select
+		.we(CPU_WE),			// write enable
+		.addr(CPU_AB[3:0]),		// address
+		.din(CPU_DO),			// data bus input
+		.dout(led_do),			// data bus output
+		.rgb0(rgb0),			// rgb0 pin
+		.rgb1(rgb1),			// rgb1 pin
+		.rgb2(rgb2)				// rgb2 pin
+	);
+	
 	// 2kB ROM @ f800-ffff
 	reg [7:0] rom_mem[2047:0];
 	reg [7:0] rom_do;
@@ -146,16 +166,17 @@ module tst_6502(
 	reg [6:0] mux_sel;
 	always @(posedge clk)
 		if(CPU_RDY)
-			mux_sel <= {rom_sel,wb_sel,acia_sel,gpio_sel,video_sel,basic_sel,ram_sel};
+			mux_sel <= {rom_sel,led_sel,gpio_sel,wb_sel,acia_sel,video_sel,basic_sel,ram_sel};
 	always @(*)
 		casez(mux_sel)
-			7'b0000001: CPU_DI = ram_do;
-			7'b000001z: CPU_DI = basic_do;
-			7'b00001zz: CPU_DI = video_do;
-			7'b0001zzz: CPU_DI = gpio_do;
-			7'b001zzzz: CPU_DI = acia_do;
-			7'b01zzzzz: CPU_DI = wb_do;
-			7'b1zzzzzz: CPU_DI = rom_do;
+			8'b00000001: CPU_DI = ram_do;
+			8'b0000001z: CPU_DI = basic_do;
+			8'b000001zz: CPU_DI = video_do;
+			8'b00001zzz: CPU_DI = acia_do;
+			8'b0001zzzz: CPU_DI = wb_do;
+			8'b001zzzzz: CPU_DI = gpio_do;
+			8'b01zzzzzz: CPU_DI = led_do;
+			8'b1zzzzzzz: CPU_DI = rom_do;
 			default: CPU_DI = rom_do;
 		endcase
 endmodule

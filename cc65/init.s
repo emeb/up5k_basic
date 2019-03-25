@@ -11,6 +11,7 @@
 .import		_video_out
 .import		_spi_init
 .import		_spi_txrx
+.import		_ledpwm_init
 
 .segment	"BAS_VEC"
 
@@ -50,6 +51,10 @@ jmplp:		lda init_tab,X
 ; ---------------------------------------------------------------------------
 ; Init spi
 			jsr _spi_init
+
+; ---------------------------------------------------------------------------
+; Init led pwm
+			jsr _ledpwm_init
 
 ; ---------------------------------------------------------------------------
 ; display boot prompt
