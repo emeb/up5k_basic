@@ -20,7 +20,7 @@ To build this you will need the following FPGA tools
 
 * Icestorm - ice40 FPGA tools
 * Yosys - Synthesis
-* Nextpnr - Place and Route
+* Nextpnr - Place and Route (newer than Mar 23 2019)
 
 Info on these can be found at http://www.clifford.at/icestorm/
 
@@ -104,9 +104,8 @@ are accessible through a "system bus" that's similar to the popular Wishbone
 standard. I've added a 6502 to Wishbone bridge mapped to addresses $F100-$F1FF
 which provides access to all four cores. Currently only the SPI core at
 addresses $F106-$F10F is connected but I've tested it and added some bare-bones
-access routines in the support ROM. At the time of this commit the support for
-the SPI and I2C cores is only available in an experimental branch of the
-nextpnr tool, but it expected in mainline shortly.
+access routines in the support ROM. This requires features that were added
+to nextpnr on March 23, 2019 so make sure you've got the latest from git.
 
 ## LED PWM
 
