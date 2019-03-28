@@ -12,6 +12,9 @@
 .import		_spi_init
 .import		_spi_txrx
 .import		_ledpwm_init
+.import		_cmon
+.export		_input
+.export		_output
 
 .segment	"BAS_VEC"
 
@@ -85,8 +88,13 @@ bp_skip_W:	cmp #'M'				; M ?
 ; Machine-language monitor - temp used for testing SPI 
 
 .proc _monitor: near
-			jsr _spi_txrx
-			jmp _monitor			; endless loop on spi txrx
+;			jsr _spi_txrx
+;			jmp _monitor			; endless loop on spi txrx
+			lda #$0a
+			jsr _output
+			lda #$0d
+			jsr _output
+			jmp _cmon
 .endproc
 
 ; ---------------------------------------------------------------------------

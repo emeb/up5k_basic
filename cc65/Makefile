@@ -2,7 +2,7 @@
 # 03-04-19 E. Brombaugh
 
 # C and assy source files
-SRC =	init.s acia.s video.s spi.s ledpwm.s
+SRC =	init.s acia.s video.s spi.s ledpwm.s cmon.s
 
 # compiler output
 OBJ = rom
