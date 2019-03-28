@@ -62,13 +62,10 @@ jmplp:		lda init_tab,X
 ; ---------------------------------------------------------------------------
 ; display boot prompt
 
-			ldx #$00
-bplp:		lda bootprompt,X		; get char
-			beq bpdone				; final null?
-			jsr _output				; send char
-			inx
-			bne bplp				; back to start
-
+			lda #.lobyte(bootprompt)
+			ldy #.hibyte(bootprompt)
+			jsr _strout
+			
 ; ---------------------------------------------------------------------------
 ; Cold or Warm Start
 
@@ -85,16 +82,29 @@ bp_skip_W:	cmp #'M'				; M ?
 			jmp _monitor
 			
 ; ---------------------------------------------------------------------------
-; Machine-language monitor - temp used for testing SPI 
+; Machine-language monitor
 
 .proc _monitor: near
-;			jsr _spi_txrx
-;			jmp _monitor			; endless loop on spi txrx
-			lda #$0a
+			lda #.lobyte(montxt)	; display monitor text
+			ldy #.hibyte(montxt)
+			jsr _strout
+			jsr _cmon
+			jmp _init
+.endproc
+
+; ---------------------------------------------------------------------------
+; string output routine - low addr in A, high addr in Y, null terminated
+
+.proc _strout: near
+			sta $fe
+			sty $ff
+			ldy #0
+solp:		lda ($fe),y
+			beq sodone
 			jsr _output
-			lda #$0d
-			jsr _output
-			jmp _cmon
+			iny
+			bne solp
+sodone:		rts
 .endproc
 
 ; ---------------------------------------------------------------------------
@@ -189,6 +199,12 @@ init_tab:
 
 bootprompt:
 .byte		10, 13, "C/W/M?", 0
+
+montxt:
+.byte		10, 13, "C'MON Monitor", 10, 13
+.byte		"AAAAx - examine 128 bytes @ AAAA", 10, 13
+.byte		"AAAA@DD,DD,... - store DD bytes @ AAAA", 10, 13
+.byte		"AAAAg - go @ AAAA", 10, 13, 0
 
 ; ---------------------------------------------------------------------------
 ; table of data for video driver

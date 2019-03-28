@@ -18,6 +18,8 @@
 ;
 ; ported to 6502 from 65Org16
 ; ported to a6502 emulator
+;
+; 03-27-19 E. Brombaugh - modified for up5k 6502 project
 
 .feature labels_without_colons
 
@@ -28,20 +30,19 @@
 WIDTH  = 8         ;must be a power of 2
 HEIGHT = 16
 
-;INPUT  = $7F86
-;OUTPUT = $7F83
 
 .macro putc
-       JSR _output
+       JSR _output	; EMEB - modified for up5k ROM
 .endmacro
 
 .macro getc
-       JSR _input
+       JSR _input	; EMEB - modified for up5k ROM
 .endmacro
 
 ; cmon zero page usage
-ADRESS = 0
-NUMBER = 2
+; EMEB - modified for OSI mapping
+ADRESS = $FE
+NUMBER = $FC
 
 .ifdef SINGLESTEP
 AREG   = 4
@@ -119,13 +120,13 @@ NSSTEP
 ;   P-Z -> $FFE9-$FFF3
 ;
        BEQ GO
-       CMP #$FA
+       CMP #$FA	; EMEB - why doesn't ca65 support negatives?
        BCS M3
 ;
 ; Insert additional commands for (case-insensitive) letters here
 ;
 
-       CMP #$F1
+       CMP #$F1	; EMEB - why doesn't ca65 support negatives?
        BNE M6
 DUMP   JSR OUTCR
        TYA
@@ -147,12 +148,11 @@ D1     LDA (NUMBER),Y ;output hex bytes
        PLA
        TAY
 D2     LDA (NUMBER),Y ;output characters
-       AND #$7F
        CMP #$20
        BCC D3
        CMP #$7F
        BCC D4
-D3     EOR #$40
+D3     LDA #$2E		; EMEB - convert non-printables to '.'
 D4     putc
        INY
        TYA
@@ -160,6 +160,7 @@ D4     putc
        BNE D2
        CPY #WIDTH*HEIGHT
        BCC DUMP
+	   JMP M1		; EMEB - added to return to prompt
 M2J
        JMP M2		; branches out of range for 6502 when putc is 3 bytes
 COMMA  LDA NUMBER

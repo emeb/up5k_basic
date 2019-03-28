@@ -64,12 +64,18 @@ Again, hit 'enter' to use the default. It then prints a welcome message and
 is ready to accept BASIC commands and code. You can find out more about
 how to use this version of BASIC here: https://www.pcjs.org/docs/c1pjs/
 
+## C'MON
+
+Answering "M" to the boot prompt will start the C'MON monitor which allows
+examining and editing memory contents as well as executing machine code.
+
 ## Boot ROM
 
 The 2kB ROM located at $f800 - $ffff contains the various reset/interrupt
-vectors, initialization code and serial I/O routines needed to support
-BASIC. It's extremely stripped-down and just handles character input, output
-and Control-C checking - the load and save vectors are currently stubbed out.
+vectors, initialization code, the C'MON monitor and I/O routines needed to
+support BASIC. It's extremely stripped-down and just handles character input,
+output and Control-C checking - the load and save vectors are currently stubbed
+out.
 
 You can revise this ROM with your own additional support code, or to reduce the
 size of the ROM to free up resources for more RAM - you'll need to edit the
