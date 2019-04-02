@@ -36,13 +36,11 @@ set_io gpio_o[6] 31
 set_io gpio_o[7] 32
 
 set_io gpio_i[0] 6
-set_io gpio_i[1] 4
-set_io gpio_i[2] 3
-set_io gpio_i[3] 2
-set_io gpio_i[4] 48
-set_io gpio_i[5] 47
-set_io gpio_i[6] 46
-set_io gpio_i[7] 45
+set_io gpio_i[1] 3
+set_io gpio_i[2] 2
+set_io gpio_i[3] 48
+set_io gpio_i[4] 46
+set_io gpio_i[5] 45
 
 set_io RX 27
 set_io TX 28
@@ -51,6 +49,9 @@ set_io spi0_mosi 25
 set_io spi0_miso 26
 set_io spi0_sclk 21
 set_io spi0_cs0 23
+
+set_io ps2_dat 4
+set_io ps2_clk 47
 
 set_io luma 19
 set_io sync 20

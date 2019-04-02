@@ -9,9 +9,9 @@ includes the following features:
   original OSI 2kB character ROM
 * 2kB ROM for startup and I/O support
 * 8kB ROM for Ohio Scientific C1P Microsoft BASIC
-* 2kB ROM for the video character generator
 * SPI port
 * LED PWM driver
+* PS/2 Keyboard port
 
 ![screenshot](screenshot.png)
 
@@ -44,9 +44,11 @@ target of the Makefile in the icestorm directory to match your own hardware.
 
 ## Running BASIC
 
-You will need to connect a 115200bps serial terminal port to the TX/RX pins of
-the FPGA (depends on your .pcf definitions - pins 3/4 in my build for the
-upduino). Load the bitstream an you'll see the boot prompt:
+You will need to connect a PS/2 keyboard to the ps2_clk/dat pins, or a
+115200bps serial terminal port to the TX/RX pins of the FPGA - the data input
+routines can take characters from either or both.
+
+Load the bitstream an you'll see the boot prompt:
 
     C/W/M?
 

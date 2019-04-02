@@ -12,6 +12,8 @@
 .import		_spi_init
 .import		_spi_txrx
 .import		_ledpwm_init
+.import		_ps2_init
+.import		_ps2_rx_nb
 .import		_cmon
 .export		_input
 .export		_output
@@ -60,6 +62,10 @@ jmplp:		lda init_tab,X
 			jsr _ledpwm_init
 
 ; ---------------------------------------------------------------------------
+; Init ps2 input
+			jsr _ps2_init
+
+; ---------------------------------------------------------------------------
 ; display boot prompt
 
 			lda #.lobyte(bootprompt)
@@ -71,7 +77,10 @@ jmplp:		lda init_tab,X
 
 bpdone:
 			jsr _acia_rx_chr		; get char
-			cmp #'C'				; C ?
+			cmp #'D'				; D ?
+			bne bp_skip_D
+			jmp _diags				; Diagnostic
+bp_skip_D:	cmp #'C'				; C ?
 			bne bp_skip_C
 			jmp $BD11				; BASIC Cold Start
 bp_skip_C:	cmp #'W'				; W ?
@@ -79,7 +88,7 @@ bp_skip_C:	cmp #'W'				; W ?
 			jmp $0000				; BASIC Warm Start
 bp_skip_W:	cmp #'M'				; M ?
 			bne bpdone
-			jmp _monitor
+			jmp _monitor			; C'Mon monitor
 			
 ; ---------------------------------------------------------------------------
 ; Machine-language monitor
@@ -90,6 +99,42 @@ bp_skip_W:	cmp #'M'				; M ?
 			jsr _strout
 			jsr _cmon
 			jmp _init
+.endproc
+
+; ---------------------------------------------------------------------------
+; Diagnostics - dump PS/2 data to screen
+
+.proc _diags: near
+			lda #.lobyte(diagtxt)	; display diag text
+			ldy #.hibyte(diagtxt)
+			jsr _strout
+dg_kchk:	jsr _ps2_rx_nb			; check for key
+			cpx #1
+			bne	dg_kchk				; loop if no new key
+			pha						; save for low nybble
+			lsr						; get high nybble
+			lsr
+			lsr
+			lsr
+			clc						; adjust for ASCII numbers
+			adc #$30
+			cmp #$3a
+			bmi dg_na_hi
+			adc #$06				; adjust for alpha
+dg_na_hi:	jsr _output				; send
+			pla						; restore
+			and #$0F				; get low nybble
+			clc
+			adc #$30
+			cmp #$3a
+			bmi dg_na_lo
+			adc #$06
+dg_na_lo:	jsr _output				; send
+			lda #$0a				; send crlf
+			jsr _output
+			lda #$0d
+			jsr _output
+			jmp	dg_kchk				; loop forever
 .endproc
 
 ; ---------------------------------------------------------------------------
@@ -111,7 +156,14 @@ sodone:		rts
 ; BASIC input vector 
 
 .proc _input: near
-			jsr _acia_rx_chr
+			stx $0214				; save X
+in_lp:		jsr _acia_rx_nb			; check for serial input
+			cpx #1
+			beq	in_exit				; return with new char
+			jsr _ps2_rx_nb			; check for ps2 input
+			cpx #1
+			bne	in_lp				; if none keep waiting
+in_exit:	ldx $0214				; restore X
 			rts
 .endproc
 
@@ -130,10 +182,13 @@ sodone:		rts
 ; ctrl-c vector 
 
 .proc _ctrl_c: near
-			jsr _acia_rx_nb			; check for char
+			jsr _acia_rx_nb			; check for serial input
 			cpx #1
-			bne	ctrl_c_sk			; return if no new char
-			cmp #$03				; check for ctrl-c
+			beq	ctrl_c_nk			; handle new char
+			jsr _ps2_rx_nb			; check for ps2 input
+			cpx #1
+			bne ctrl_c_sk			; return if no new char
+ctrl_c_nk:	cmp #$03				; check for ctrl-c
 			bne ctrl_c_sk			; return if not ctrl-c
 			jmp $A636				; ctrl-c handler
 ctrl_c_sk:	rts
@@ -198,13 +253,17 @@ init_tab:
 ; Boot Prompt String
 
 bootprompt:
-.byte		10, 13, "C/W/M?", 0
+.byte		10, 13, "D/C/W/M?", 0
 
 montxt:
 .byte		10, 13, "C'MON Monitor", 10, 13
 .byte		"AAAAx - examine 128 bytes @ AAAA", 10, 13
 .byte		"AAAA@DD,DD,... - store DD bytes @ AAAA", 10, 13
 .byte		"AAAAg - go @ AAAA", 10, 13, 0
+
+diagtxt:
+.byte		10, 13, "Diagnostics", 10, 13
+.byte		"Dumping raw PS/2 data", 10, 13, 0
 
 ; ---------------------------------------------------------------------------
 ; table of data for video driver

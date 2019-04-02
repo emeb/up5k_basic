@@ -21,6 +21,9 @@ module tst_6502(
 			spi0_sclk,
 			spi0_cs0,
 	
+	inout	ps2_clk,		// PS/2 Keyboard port
+			ps2_dat,
+	
 	output	rgb0,			// LED drivers
 			rgb1,
 			rgb2,
@@ -56,6 +59,7 @@ module tst_6502(
 	wire wb_sel = (CPU_AB[15:8] == 8'hf1) ? 1 : 0;
 	wire gpio_sel = (CPU_AB[15:8] == 8'hf2) ? 1 : 0;
 	wire led_sel = (CPU_AB[15:8] == 8'hf3) ? 1 : 0;
+	wire ps2_sel = (CPU_AB[15:8] == 8'hf4) ? 1 : 0;
 	wire rom_sel = (CPU_AB[15:11] == 5'h1f) ? 1 : 0;
 	
 	// 32kB RAM @ 0000-7FFF
@@ -175,6 +179,21 @@ module tst_6502(
 		.rgb1(rgb1),			// rgb1 pin
 		.rgb2(rgb2)				// rgb2 pin
 	);
+			
+	// PS/2 Keyboard port
+	wire [7:0] ps2_do;
+	ps2 ups2(
+		.clk(clk),				// system clock
+		.rst(reset),			// system reset
+		.cs(ps2_sel),			// chip select
+		.we(CPU_WE),			// write enable
+		.addr(CPU_AB[0]),		// address
+		.din(CPU_DO),			// data bus input
+		.dout(ps2_do),			// data bus output
+		.ps2_clk(ps2_clk),		// ps2 clock i/o
+		.ps2_dat(ps2_dat)		// ps2 data i/o
+	);
+			
 	
 	// 2kB ROM @ f800-ffff
 	reg [7:0] rom_mem[2047:0];
@@ -185,20 +204,22 @@ module tst_6502(
 		rom_do <= rom_mem[CPU_AB[10:0]];
 
 	// data mux only updates select lines when CPU_RDY asserted
-	reg [6:0] mux_sel;
+	reg [8:0] mux_sel;
 	always @(posedge clk)
 		if(CPU_RDY)
-			mux_sel <= {rom_sel,led_sel,gpio_sel,wb_sel,acia_sel,video_sel,basic_sel,ram_sel};
+			mux_sel <= {rom_sel,ps2_sel,led_sel,gpio_sel,wb_sel,
+						acia_sel,video_sel,basic_sel,ram_sel};
 	always @(*)
 		casez(mux_sel)
-			8'b00000001: CPU_DI = ram_do;
-			8'b0000001z: CPU_DI = basic_do;
-			8'b000001zz: CPU_DI = video_do;
-			8'b00001zzz: CPU_DI = acia_do;
-			8'b0001zzzz: CPU_DI = wb_do;
-			8'b001zzzzz: CPU_DI = gpio_do;
-			8'b01zzzzzz: CPU_DI = led_do;
-			8'b1zzzzzzz: CPU_DI = rom_do;
+			9'b000000001: CPU_DI = ram_do;
+			9'b00000001z: CPU_DI = basic_do;
+			9'b0000001zz: CPU_DI = video_do;
+			9'b000001zzz: CPU_DI = acia_do;
+			9'b00001zzzz: CPU_DI = wb_do;
+			9'b0001zzzzz: CPU_DI = gpio_do;
+			9'b001zzzzzz: CPU_DI = led_do;
+			9'b01zzzzzzz: CPU_DI = ps2_do;
+			9'b1zzzzzzzz: CPU_DI = rom_do;
 			default: CPU_DI = rom_do;
 		endcase
 endmodule

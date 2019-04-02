@@ -1,4 +1,4 @@
-// u4k_basic_top.v - top level for tst_6502 in up5k
+// up5k_basic_top.v - top level for tst_6502 in up5k
 // 03-02-19 E. Brombaugh
 
 `default_nettype none
@@ -13,7 +13,7 @@ module up5k_basic_top(
 	
     // gpio
     output [7:0] gpio_o,
-    input [7:0] gpio_i,
+    input [5:0] gpio_i,
     
     // serial
     input RX,
@@ -24,6 +24,10 @@ module up5k_basic_top(
 			spi0_miso,
 			spi0_sclk,
 			spi0_cs0,
+	
+	// PS/2 keyboard port
+	inout	ps2_clk,
+			ps2_dat,
 	
     // diagnostics
     output tst_rst,
@@ -108,7 +112,7 @@ module up5k_basic_top(
         .sync(raw_sync),
 		
 		.gpio_o(gpio_o),
-		.gpio_i(gpio_i),
+		.gpio_i({2'b00,gpio_i}),
     
         .RX(RX),
         .TX(TX),
@@ -117,6 +121,9 @@ module up5k_basic_top(
 		.spi0_miso(spi0_miso),
 		.spi0_sclk(spi0_sclk),
 		.spi0_cs0(spi0_cs0),
+	
+		.ps2_clk(ps2_clk),
+		.ps2_dat(ps2_dat),
 		
 		.rgb0(RGB0),
 		.rgb1(RGB1),
