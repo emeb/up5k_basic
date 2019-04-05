@@ -8,7 +8,6 @@
 
 .export		_ps2_init
 .export		_ps2_rx_nb
-.export		_ps2_chr_nb
 
 .segment	"KEY_DAT"
 
@@ -38,15 +37,4 @@ input_vec:	.byte		$00
 			ldx #1
 			lda	PS2_DATA			; receive
 nb_no_chr:	rts
-.endproc
-
-; ---------------------------------------------------------------------------
-; non-blocking ASCII - returns 1 in X if char in A and 0 in X if none
-
-.proc _ps2_chr_nb: near
-			jsr _ps2_rx_nb			; get status & code if available
-			cpx #1
-			bne	pcn_end				; exit if no new key
-			
-pcn_end:	rts			
 .endproc

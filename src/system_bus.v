@@ -73,7 +73,7 @@ module system_bus(
 		.MI(mi_0),
 		.SI(si_0),
 		.SCKI(scki_0),
-		.SCSNI(scsni_0),
+		.SCSNI(scsni_0),		// must be pulled high to prevent SOE
 		.SBDATO7(sbdato[7]),
 		.SBDATO6(sbdato[6]),
 		.SBDATO5(sbdato[5]),
@@ -105,7 +105,7 @@ module system_bus(
 	// MOSI driver
 	SB_IO #(
 		.PIN_TYPE(6'b101001),
-		.PULLUP(1'b0),
+		.PULLUP(1'b1),
 		.NEG_TRIGGER(1'b0),
 		.IO_STANDARD("SB_LVCMOS")
 	) umosi (
@@ -124,7 +124,7 @@ module system_bus(
 	// MISO driver
 	SB_IO #(
 		.PIN_TYPE(6'b101001),
-		.PULLUP(1'b0),
+		.PULLUP(1'b1),
 		.NEG_TRIGGER(1'b0),
 		.IO_STANDARD("SB_LVCMOS")
 	) umiso (
@@ -143,7 +143,7 @@ module system_bus(
 	// SCK driver
 	SB_IO #(
 		.PIN_TYPE(6'b101001),
-		.PULLUP(1'b0),
+		.PULLUP(1'b1),
 		.NEG_TRIGGER(1'b0),
 		.IO_STANDARD("SB_LVCMOS")
 	) usclk (
@@ -162,7 +162,7 @@ module system_bus(
 	// CS0 driver
 	SB_IO #(
 		.PIN_TYPE(6'b101001),
-		.PULLUP(1'b0),
+		.PULLUP(1'b1),
 		.NEG_TRIGGER(1'b0),
 		.IO_STANDARD("SB_LVCMOS")
 	) ucs0 (
@@ -174,8 +174,7 @@ module system_bus(
 		.OUTPUT_ENABLE(1'b1),	// or mcsnoe_00 for hi-z when inactive
 		.D_OUT_0(mcsno_00),
 		.D_OUT_1(1'b0),
-		.D_IN_0(scsni_0),
+		.D_IN_0(scsni_0),		// unused to prevent accidental slave mode
 		.D_IN_1()
 	);
-
 endmodule

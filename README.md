@@ -9,7 +9,7 @@ includes the following features:
   original OSI 2kB character ROM
 * 2kB ROM for startup and I/O support
 * 8kB ROM for Ohio Scientific C1P Microsoft BASIC
-* SPI port
+* SPI port with access to 4MB flash memory
 * LED PWM driver
 * PS/2 Keyboard port
 
@@ -112,8 +112,9 @@ are accessible through a "system bus" that's similar to the popular Wishbone
 standard. I've added a 6502 to Wishbone bridge mapped to addresses $F100-$F1FF
 which provides access to all four cores. Currently only the SPI core at
 addresses $F106-$F10F is connected but I've tested it and added some bare-bones
-access routines in the support ROM. This requires features that were added
-to nextpnr on March 23, 2019 so make sure you've got the latest from git.
+access routines in the support ROM which can communicate with the SPI flash
+memory on my test PCB. This requires features that were added to nextpnr on 
+March 23, 2019 so make sure you've got the latest from git.
 
 ## LED PWM
 

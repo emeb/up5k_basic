@@ -15,7 +15,10 @@
 .define		SPICSR		$0f			; Chip Select reg
 
 .export		_spi_init
-.export		_spi_txrx
+.export		_spi_txrx_block
+.export		_spi_flash_read
+
+.segment	"CODE"
 
 ; ---------------------------------------------------------------------------
 ; spi initializer
@@ -33,31 +36,92 @@ si_done:	rts
 .endproc
 
 ; ---------------------------------------------------------------------------
-; spi send/receive routine
+; spi send/receive routine - block, with CS
+; low addr in A, high addr in Y, count in X
 
-.proc _spi_txrx: near
-			pha						; temp save data
+.proc _spi_txrx_block: near
+			sta $fe
+			sty $ff
+			ldy #0
 			lda #$fe				; lower cs0
 			sta SPI0_BASE+SPICSR
-ss_twt:		lda SPI0_BASE+SPISR		; get status
+ssb_twt:	lda SPI0_BASE+SPISR		; get tx status on first pass
 			and #$10				; test trdy
-			beq	ss_twt				; loop until ready
-			pla						; restore data
+			beq	ssb_twt				; loop until ready
+ssb_lp:		lda ($fe),y				; get tx byte
 			sta SPI0_BASE+SPITXDR	; send tx
-ss_rwt:		lda SPI0_BASE+SPISR		; get status		
+ssb_rwt:	lda SPI0_BASE+SPISR		; get rx status		
 			and #$08				; test rrdy
-			beq	ss_rwt				; loop until ready
+			beq	ssb_rwt				; loop until ready
+			lda SPI0_BASE+SPIRXDR	; get rx
+			sta ($fe),y				; save rx byte			
+			iny
+			dex
+			bne ssb_lp				; back to tx - assume ready
 			lda #$ff				; raise cs0
 			sta SPI0_BASE+SPICSR
-			lda SPI0_BASE+SPIRXDR	; get rx
 			rts
 .endproc
+			
+; ---------------------------------------------------------------------------
+; spi flash read
+; low addr in A, high addr in Y, count in X
+; assumes 3-bit address at buffer locations 1,2,3 - msByte 1st
 
+.proc _spi_flash_read: near
+			sta $fe					; set up buffer pointer
+			sty $ff
+			txa						; save count
+			pha
+			
+; send header
+			ldx #4					; header count
+			ldy #0
+			lda #$03				; read cmd
+			sta ($fe),y
+			lda #$fe				; lower cs0
+			sta SPI0_BASE+SPICSR
+sfr_twt:	lda SPI0_BASE+SPISR		; get tx status
+			and #$10				; test trdy
+			beq	sfr_twt				; loop until tx ready
+			lda ($fe),y				; get tx byte
+			sta SPI0_BASE+SPITXDR	; send tx
+			iny
+			dex
+			bne sfr_twt				; back to tx wait
+			
+; wait for tx ready before starting rx
+sfr_twt2:	lda SPI0_BASE+SPISR
+			and #$10
+			beq	sfr_twt2
+			lda SPI0_BASE+SPIRXDR	; dummy reads to clear RX
+			lda SPI0_BASE+SPIRXDR
+			
+; receive data
+			pla						; restore count
+			tax
+			ldy #0
+sfr_rdm:	sta SPI0_BASE+SPITXDR	; send dummy data
+sfr_rwt:	lda SPI0_BASE+SPISR		; get rx status		
+			and #$08				; test rrdy
+			beq	sfr_rwt				; loop until ready
+			lda SPI0_BASE+SPIRXDR	; get rx
+			sta ($fe),y				; save rx byte			
+			iny
+			dex
+			bne sfr_rdm				; back to dummy tx - assume ready
+			
+; finish
+			lda #$ff				; raise cs0
+			sta SPI0_BASE+SPICSR
+			rts
+.endproc
+			
 spi_init_tab:
 .byte	SPICR0,	$ff		; max delay counts on all auto CS timing
-.byte	SPICR1,	$80		; enable spi
+.byte	SPICR1,	$84		; enable spi, disable scsni(undocumented!)
 .byte	SPICR2,	$c0		; master, hold cs low while busy
-.byte	SPIBR,	$03		; divide clk by 4 for spi clk
+.byte	SPIBR,	$02		; divide clk by 3 for spi clk
 .byte	SPICSR,	$0f		; all CS outs high
 .byte	0				; end of table
 

@@ -30,10 +30,7 @@ module up5k_basic_top(
 			ps2_dat,
 	
     // diagnostics
-    output tst_rst,
-    output tst_clk,
-    output tst_irq,
-	output tst_rdy,
+    output [3:0] tst,
 	
 	// LED - via drivers
 	output RGB0, RGB1, RGB2
@@ -103,6 +100,7 @@ module up5k_basic_top(
 	end
     
 	// test unit
+	wire [3:0] uut_tst;
     wire raw_luma, raw_sync;
 	tst_6502 uut(
 		.clk(clk),
@@ -129,15 +127,10 @@ module up5k_basic_top(
 		.rgb1(RGB1),
 		.rgb2(RGB2),
     
-        .CPU_IRQ(tst_irq),
-		.CPU_RDY(tst_rdy)
+		.tst(tst)
 	);
     
 	// push/pull video outputs
 	assign luma = raw_luma;
 	assign sync = raw_sync;
-
-     // hook up diagnostics
-    assign tst_rst = reset;
-    assign tst_clk = clk;
 endmodule

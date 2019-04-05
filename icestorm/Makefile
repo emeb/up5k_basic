@@ -24,6 +24,7 @@ DEVICE = up5k
 YOSYS = /usr/local/bin/yosys
 NEXTPNR = nextpnr-ice40
 #NEXTPNR_ARGS = --pre-pack $(SDC) --ignore-loops
+#NEXTPNR_ARGS = --pre-pack $(SDC)
 NEXTPNR_ARGS = --pre-pack $(SDC) --placer heap
 ICEPACK = icepack
 ICETIME = icetime

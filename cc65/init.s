@@ -4,19 +4,17 @@
 ;
 
 .import		_acia_init
-.import		_acia_tx_chr
-.import		_acia_rx_chr
-.import		_acia_rx_nb
 .import		_video_init
-.import		_video_out
 .import		_spi_init
-.import		_spi_txrx
 .import		_ledpwm_init
 .import		_ps2_init
-.import		_ps2_rx_nb
 .import		_cmon
-.export		_input
-.export		_output
+.import		_diag2
+.import		_hexout
+.import		_chrin
+.import		_input
+.import		_output
+.import		_strout
 
 .segment	"BAS_VEC"
 
@@ -76,7 +74,7 @@ jmplp:		lda init_tab,X
 ; Cold or Warm Start
 
 bpdone:
-			jsr _acia_rx_chr		; get char
+			jsr _input				; get char
 			cmp #'D'				; D ?
 			bne bp_skip_D
 			jmp _diags				; Diagnostic
@@ -108,85 +106,15 @@ bp_skip_W:	cmp #'M'				; M ?
 			lda #.lobyte(diagtxt)	; display diag text
 			ldy #.hibyte(diagtxt)
 			jsr _strout
-dg_kchk:	jsr _ps2_rx_nb			; check for key
-			cpx #1
-			bne	dg_kchk				; loop if no new key
-			pha						; save for low nybble
-			lsr						; get high nybble
-			lsr
-			lsr
-			lsr
-			clc						; adjust for ASCII numbers
-			adc #$30
-			cmp #$3a
-			bmi dg_na_hi
-			adc #$06				; adjust for alpha
-dg_na_hi:	jsr _output				; send
-			pla						; restore
-			and #$0F				; get low nybble
-			clc
-			adc #$30
-			cmp #$3a
-			bmi dg_na_lo
-			adc #$06
-dg_na_lo:	jsr _output				; send
-			lda #$0a				; send crlf
-			jsr _output
-			lda #$0d
-			jsr _output
-			jmp	dg_kchk				; loop forever
-.endproc
-
-; ---------------------------------------------------------------------------
-; string output routine - low addr in A, high addr in Y, null terminated
-
-.proc _strout: near
-			sta $fe
-			sty $ff
-			ldy #0
-solp:		lda ($fe),y
-			beq sodone
-			jsr _output
-			iny
-			bne solp
-sodone:		rts
-.endproc
-
-; ---------------------------------------------------------------------------
-; BASIC input vector 
-
-.proc _input: near
-			stx $0214				; save X
-in_lp:		jsr _acia_rx_nb			; check for serial input
-			cpx #1
-			beq	in_exit				; return with new char
-			jsr _ps2_rx_nb			; check for ps2 input
-			cpx #1
-			bne	in_lp				; if none keep waiting
-in_exit:	ldx $0214				; restore X
-			rts
-.endproc
-
-; ---------------------------------------------------------------------------
-; BASIC output vector 
-
-.proc _output: near
-			pha
-			jsr _video_out
-			pla
-			jsr _acia_tx_chr
-			rts
+d_lp:		jsr _diag2
+			jmp d_lp
 .endproc
 
 ; ---------------------------------------------------------------------------
 ; ctrl-c vector 
 
 .proc _ctrl_c: near
-			jsr _acia_rx_nb			; check for serial input
-			cpx #1
-			beq	ctrl_c_nk			; handle new char
-			jsr _ps2_rx_nb			; check for ps2 input
-			cpx #1
+			jsr _chrin				; get char - serial or PS/2
 			bne ctrl_c_sk			; return if no new char
 ctrl_c_nk:	cmp #$03				; check for ctrl-c
 			bne ctrl_c_sk			; return if not ctrl-c
@@ -263,7 +191,11 @@ montxt:
 
 diagtxt:
 .byte		10, 13, "Diagnostics", 10, 13
+.if 0
 .byte		"Dumping raw PS/2 data", 10, 13, 0
+.else
+.byte		"Dump SPI Flash ID", 10, 13, 0
+.endif
 
 ; ---------------------------------------------------------------------------
 ; table of data for video driver

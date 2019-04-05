@@ -27,9 +27,8 @@ module tst_6502(
 	output	rgb0,			// LED drivers
 			rgb1,
 			rgb2,
-			
-	output	CPU_IRQ,		// diagnostic
-	output	CPU_RDY			// diagnostic
+	
+	output	[3:0] tst		// diagnostic
 );
 	// stuff needed throughout
 	reg [7:0] sysctl;
@@ -118,6 +117,7 @@ module tst_6502(
 	// 256B Wishbone bus master and SB IP cores @ F100-F1FF
 	wire [7:0] wb_do;
 	wire wb_irq, wb_rdy;
+	wire spi_moe, spi_soe, spi_sckoe;
 	system_bus usysbus(
 		.clk(clk),				// system clock
 		.rst(reset),			// system reset
@@ -222,4 +222,10 @@ module tst_6502(
 			9'b1zzzzzzzz: CPU_DI = rom_do;
 			default: CPU_DI = rom_do;
 		endcase
+		
+	// hook up diagnostics
+	assign tst[0] = clk;
+	assign tst[1] = wb_sel;
+	assign tst[2] = CPU_RDY;
+	assign tst[3] = 1'b0;
 endmodule
