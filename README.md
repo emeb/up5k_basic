@@ -2,13 +2,14 @@
 A small 6502 system with MS BASIC in ROM. This system
 includes the following features:
 
-* 32kB SRAM (using one of the four available SPRAM cores)
+* Up to 52kB SRAM with optional write protect (using two of the four available SPRAM cores)
 * 8 bits input, 8 bits output
 * 115200bps serial I/O port
 * NTSC composite video with text/glyph and graphic modes, 32kB video RAM and
   original OSI 2kB character ROM
 * 2kB ROM for startup and I/O support
 * 8kB ROM for Ohio Scientific C1P Microsoft BASIC
+  - option to eliminate ROM and load BASIC from spi flash into protected RAM
 * SPI port with access to 4MB flash memory
 * LED PWM driver
 * PS/2 Keyboard port
