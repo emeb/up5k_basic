@@ -5,10 +5,26 @@ module RAM_32kB(
     input clk,
     input sel,
     input we,
+	input [7:0] wp,
     input [14:0] addr,
     input [7:0] din,
     output reg [7:0] dout
 );
+
+	// write protect 4k blocks
+	reg wp_we;
+	always @(*)
+		case(addr[14:12])
+			3'd0:wp_we = (~wp[0] & we);
+			3'd1:wp_we = (~wp[1] & we);
+			3'd2:wp_we = (~wp[2] & we);
+			3'd3:wp_we = (~wp[3] & we);
+			3'd4:wp_we = (~wp[4] & we);
+			3'd5:wp_we = (~wp[5] & we);
+			3'd6:wp_we = (~wp[6] & we);
+			3'd7:wp_we = (~wp[7] & we);
+		endcase
+			
 //`define SIMULATE
 `ifdef SIMULATE
 	integer i;
@@ -21,7 +37,7 @@ module RAM_32kB(
     
     // synchronous write
     always @(posedge clk)
-        if(sel & we)
+        if(sel & wp_we)
             memory[addr] <= din;
     
     // synchronous read
@@ -35,7 +51,7 @@ module RAM_32kB(
 		.ADDRESS(addr[14:1]),
 		.DATAIN({din,din}),
 		.MASKWREN(addr[0]?4'b1100:4'b0011),
-		.WREN(we),
+		.WREN(wp_we),
 		.CHIPSELECT(sel),
 		.CLOCK(clk),
 		.STANDBY(1'b0),

@@ -214,6 +214,7 @@ module VIDEO(
 		.clk(clk),
 		.sel(1'b1),
 		.we(mem_we),
+		.wp(8'h00),
 		.addr({bank,mem_addr}),
 		.din(mem_din),
 		.dout(dout)

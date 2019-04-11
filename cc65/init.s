@@ -6,15 +6,20 @@
 .import		_acia_init
 .import		_video_init
 .import		_spi_init
+.import		_spi_txrx_block
+.import		_spi_flash_read
 .import		_ledpwm_init
 .import		_ps2_init
 .import		_cmon
 .import		_diag2
-.import		_hexout
 .import		_chrin
 .import		_input
 .import		_output
 .import		_strout
+.import		_load
+.import		BAS_COLDSTART
+.import		BAS_WARMSTART
+.import		BAS_HNDL_CTRLC
 
 .segment	"BAS_VEC"
 
@@ -64,6 +69,41 @@ jmplp:		lda init_tab,X
 			jsr _ps2_init
 
 ; ---------------------------------------------------------------------------
+; load & lock RAM1
+			; send wake up cmd to flash
+			lda #$AB				; Wake up
+			sta $f8
+			lda #.lobyte($00f8)		; buffer for cmd
+			ldy #.hibyte($00f8)		;
+			ldx #1					; 1 bytes - cmd
+			jsr _spi_txrx_block
+			
+			; read 8kB from flash into RAM
+			lda #$04				; source addr 23:16
+			sta $f8
+			lda #$00				; source addr 15:8
+			sta $f9
+			lda #$00				; source addr 7:0
+			sta $fa
+			lda #$00				; count 7:0
+			sta $fc
+			lda #$20				; count 15:8
+			sta $fd
+			lda #.lobyte($A000)		; dest addr
+			sta $fe
+			lda #.hibyte($A000)
+			sta $ff
+			jsr _spi_flash_read
+			
+			; protect BASIC
+			lda #$0C
+			sta $F203
+			lda #.lobyte(loadmsg)
+			ldy #.hibyte(loadmsg)
+			jsr _strout
+			
+			
+; ---------------------------------------------------------------------------
 ; display boot prompt
 
 			lda #.lobyte(bootprompt)
@@ -80,10 +120,10 @@ bpdone:
 			jmp _diags				; Diagnostic
 bp_skip_D:	cmp #'C'				; C ?
 			bne bp_skip_C
-			jmp $BD11				; BASIC Cold Start
+			jmp BAS_COLDSTART		; BASIC Cold Start
 bp_skip_C:	cmp #'W'				; W ?
 			bne bp_skip_W
-			jmp $0000				; BASIC Warm Start
+			jmp BAS_WARMSTART		; BASIC Warm Start
 bp_skip_W:	cmp #'M'				; M ?
 			bne bpdone
 			jmp _monitor			; C'Mon monitor
@@ -118,7 +158,7 @@ d_lp:		jsr _diag2
 			bne ctrl_c_sk			; return if no new char
 ctrl_c_nk:	cmp #$03				; check for ctrl-c
 			bne ctrl_c_sk			; return if not ctrl-c
-			jmp $A636				; ctrl-c handler
+			jmp BAS_HNDL_CTRLC		; go to ctrl-c handler
 ctrl_c_sk:	rts
 .endproc
 
@@ -174,11 +214,14 @@ init_tab:
 .addr		_input					; input
 .addr		_output					; output
 .addr		_ctrl_c					; ctrl-c
-.addr		_dummy					; load
+.addr		_load					; load
 .addr		_dummy					; save
 
 ; ---------------------------------------------------------------------------
-; Boot Prompt String
+; Message Strings
+
+loadmsg:
+.byte		10, 13, "RAM1 loaded & locked", 0
 
 bootprompt:
 .byte		10, 13, "D/C/W/M?", 0

@@ -304,8 +304,7 @@ STNB1  TSX
        STX SREG
 STNB2  JSR STOUT
        JMP M2
-STBR   CLD ; bugfix from 6502.org 3-31-19
-       DEC ADRESS+1
+STBR   DEC ADRESS+1
        LDY #-1  ; #$FFFF
        LDA (ADRESS),Y
        BMI STBR1

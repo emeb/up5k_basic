@@ -62,9 +62,10 @@ ssb_rwt:	lda SPI0_BASE+SPISR		; get rx status
 			sta SPI0_BASE+SPICSR
 			rts
 .endproc
-			
+
+.if 0
 ; ---------------------------------------------------------------------------
-; spi flash read
+; spi flash read - 256 byte max
 ; low addr in A, high addr in Y, count in X
 ; assumes 3-bit address at buffer locations 1,2,3 - msByte 1st
 
@@ -116,7 +117,74 @@ sfr_rwt:	lda SPI0_BASE+SPISR		; get rx status
 			sta SPI0_BASE+SPICSR
 			rts
 .endproc
+.else
+; ---------------------------------------------------------------------------
+; spi flash read - 64kB max
+; low dest addr in $fe, high dest addr in $ff
+; low count in $fc, hight count in $fd
+; low source addr in $f9, mid source addr in $fa, high source addr i $fb
+
+.proc _spi_flash_read: near
+; invert count to avoid slow 16-bit decrement
+			clc
+			lda $fc
+			eor #$ff
+			adc #$01
+			sta $fc
+			lda $fd
+			eor #$ff
+			adc #$00
+			sta $fd
+
+; lower cs0
+			lda #$fe
+			sta SPI0_BASE+SPICSR
 			
+; send header w/ read cmd + source addr
+			ldx #$00				; point to source addr
+			ldy #$04				; four byte read header
+			lda #$03				; read command
+sfr_tlp:	pha						; temp save data
+sfr_twt:	lda SPI0_BASE+SPISR		; get tx status
+			and #$10				; test trdy
+			beq	sfr_twt				; loop until tx ready
+			pla
+			sta SPI0_BASE+SPITXDR	; send tx
+			lda $f8,x				; get next tx byte
+			inx
+			dey
+			bne sfr_tlp				; back to tx loop
+			
+; wait for tx ready before starting rx
+sfr_twt2:	lda SPI0_BASE+SPISR
+			and #$10
+			beq	sfr_twt2
+			lda SPI0_BASE+SPIRXDR	; dummy reads to clear RX
+			lda SPI0_BASE+SPIRXDR
+			
+; read data into dest addr
+			ldy #$00				; no offset
+sfr_rdm:	sty SPI0_BASE+SPITXDR	; send dummy data
+sfr_rwt:	lda SPI0_BASE+SPISR		; get rx status		
+			and #$08				; test rrdy
+			beq	sfr_rwt				; loop until ready
+			lda SPI0_BASE+SPIRXDR	; get rx
+			sta ($fe),y				; save rx byte
+			inc $fe					; inc dest ptr
+			bne sfr_skp0
+			inc $ff
+sfr_skp0:	inc $fc					; inc count
+			bne sfr_rdm
+			inc $fd
+			bne sfr_rdm				; back to dummy tx - assume ready
+			
+; finish
+			lda #$ff				; raise cs0
+			sta SPI0_BASE+SPICSR
+			rts
+.endproc
+.endif
+
 spi_init_tab:
 .byte	SPICR0,	$ff		; max delay counts on all auto CS timing
 .byte	SPICR1,	$84		; enable spi, disable scsni(undocumented!)

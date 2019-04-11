@@ -51,9 +51,18 @@ module tst_6502(
 	);
 	
 	// address decode
-	wire ram_sel = (CPU_AB[15] == 1'b0) ? 1 : 0;
+	wire ram0_sel = (CPU_AB[15] == 1'b0) ? 1 : 0;
+//`define ROM_BASIC
+`ifdef ROM_BASIC
+	// BASIC in ROM @ A000-BFFF, RAM1 range is 8000-9FFF,C000-CFFF
+	wire ram1_sel = ((CPU_AB[15:12] == 4'h8)||(CPU_AB[15:12] == 4'h9)||(CPU_AB[15:12] == 4'hc)) ? 1 : 0;
 	wire basic_sel = ((CPU_AB[15:12] == 4'ha)||(CPU_AB[15:12] == 4'hb)) ? 1 : 0;
-	wire video_sel = ((CPU_AB[15:12] == 4'hD)||(CPU_AB[15:12] == 4'he)) ? 1 : 0;
+`else
+	// BASIC in RAM1 - range is 8000-CFFF
+	wire ram1_sel = ((CPU_AB[15:12] >= 4'h8)&&(CPU_AB[15:12] <= 4'hC)) ? 1 : 0;
+	wire basic_sel = 1'b0;
+`endif
+	wire video_sel = ((CPU_AB[15:12] == 4'hd)||(CPU_AB[15:12] == 4'he)) ? 1 : 0;
 	wire acia_sel = (CPU_AB[15:8] == 8'hf0) ? 1 : 0;
 	wire wb_sel = (CPU_AB[15:8] == 8'hf1) ? 1 : 0;
 	wire gpio_sel = (CPU_AB[15:8] == 8'hf2) ? 1 : 0;
@@ -61,17 +70,34 @@ module tst_6502(
 	wire ps2_sel = (CPU_AB[15:8] == 8'hf4) ? 1 : 0;
 	wire rom_sel = (CPU_AB[15:11] == 5'h1f) ? 1 : 0;
 	
+	// write protect bytes
+	reg [7:0] ram0_wp, ram1_wp;
+	
 	// 32kB RAM @ 0000-7FFF
-	wire [7:0] ram_do;
-	RAM_32kB uram(
+	wire [7:0] ram0_do;
+	RAM_32kB uram0(
 		.clk(clk),
-		.sel(ram_sel),
+		.sel(ram0_sel),
 		.we(CPU_WE),
+		.wp(ram0_wp),
 		.addr(CPU_AB[14:0]),
 		.din(CPU_DO),
-		.dout(ram_do)
+		.dout(ram0_do)
 	);
 	
+	// 8kB+4kB RAM @ 8000-9FFF, C000-CFFF
+	wire [7:0] ram1_do;
+	RAM_32kB uram1(
+		.clk(clk),
+		.sel(ram1_sel),
+		.we(CPU_WE),
+		.wp(ram1_wp),
+		.addr(CPU_AB[14:0]),
+		.din(CPU_DO),
+		.dout(ram1_do)
+	);
+	
+`ifdef ROM_BASIC
 	// 8kB BASIC ROM @ A000-BFFF
 	wire [7:0] basic_do;
 	ROM_BASIC_8kB ubrom(
@@ -79,7 +105,11 @@ module tst_6502(
 		.addr(CPU_AB[12:0]),
 		.dout(basic_do)
 	);
-	
+`else
+	// BASIC ROM disabled
+	wire [7:0] basic_do = 8'h00;
+`endif
+
 	// 8kB Video RAM @ D000-EFFF
 	wire [7:0] video_do;
 	wire vid_rdy;
@@ -148,23 +178,29 @@ module tst_6502(
 		begin
 			gpio_o <= 8'h00;
 			sysctl <= 8'h00;
+			ram0_wp <= 8'h00;
+			ram1_wp <= 8'h00;
 		end
 		else if((CPU_WE == 1'b1) && (gpio_sel == 1'b1))
 		begin
-			if(CPU_AB[0])
-				gpio_o <= CPU_DO;
-			else
-				sysctl <= CPU_DO;
+			case(CPU_AB[1:0])
+				2'b00: gpio_o <= CPU_DO;
+				2'b01: sysctl <= CPU_DO;
+				2'b10: ram0_wp <= CPU_DO;
+				2'b11: ram1_wp <= CPU_DO;
+			endcase
 		end
 		
 	// read
 	always @(posedge clk)
 		if((CPU_WE == 1'b0) && (gpio_sel == 1'b1))
-			if(CPU_AB[0])
-				gpio_do <= gpio_i;
-			else
-				gpio_do <= sysctl;
-	
+			case(CPU_AB[1:0])
+				2'b00: gpio_do <= gpio_i;
+				2'b01: gpio_do <= sysctl;
+				2'b10: gpio_do <= ram0_wp;
+				2'b11: gpio_do <= ram1_wp;
+			endcase
+			
 	// LED PWM controller
 	wire [7:0] led_do;
 	led_pwm uledpwm(
@@ -204,22 +240,23 @@ module tst_6502(
 		rom_do <= rom_mem[CPU_AB[10:0]];
 
 	// data mux only updates select lines when CPU_RDY asserted
-	reg [8:0] mux_sel;
+	reg [9:0] mux_sel;
 	always @(posedge clk)
 		if(CPU_RDY)
 			mux_sel <= {rom_sel,ps2_sel,led_sel,gpio_sel,wb_sel,
-						acia_sel,video_sel,basic_sel,ram_sel};
+						acia_sel,video_sel,basic_sel,ram1_sel,ram0_sel};
 	always @(*)
 		casez(mux_sel)
-			9'b000000001: CPU_DI = ram_do;
-			9'b00000001z: CPU_DI = basic_do;
-			9'b0000001zz: CPU_DI = video_do;
-			9'b000001zzz: CPU_DI = acia_do;
-			9'b00001zzzz: CPU_DI = wb_do;
-			9'b0001zzzzz: CPU_DI = gpio_do;
-			9'b001zzzzzz: CPU_DI = led_do;
-			9'b01zzzzzzz: CPU_DI = ps2_do;
-			9'b1zzzzzzzz: CPU_DI = rom_do;
+			10'b0000000001: CPU_DI = ram0_do;
+			10'b000000001z: CPU_DI = ram1_do;
+			10'b00000001zz: CPU_DI = basic_do;
+			10'b0000001zzz: CPU_DI = video_do;
+			10'b000001zzzz: CPU_DI = acia_do;
+			10'b00001zzzzz: CPU_DI = wb_do;
+			10'b0001zzzzzz: CPU_DI = gpio_do;
+			10'b001zzzzzzz: CPU_DI = led_do;
+			10'b01zzzzzzzz: CPU_DI = ps2_do;
+			10'b1zzzzzzzzz: CPU_DI = rom_do;
 			default: CPU_DI = rom_do;
 		endcase
 		

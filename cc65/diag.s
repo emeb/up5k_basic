@@ -34,7 +34,9 @@ dg_kchk:	jsr _ps2_rx_nb			; check for key
 ; SPI test
 
 .proc _diag2: near
-dg_kchk:	lda #$AB				; Read ID instr
+.if 0
+; wake up and read ID
+			lda #$AB				; Read ID instr
 			sta $0213
 			lda #$00				; dummy data
 			sta $0214
@@ -54,15 +56,20 @@ dg_kchk:	lda #$AB				; Read ID instr
 			jsr _output
 			lda #$0d
 			jsr _output
-			lda #$00				; Addr 23:16
+.endif
+
+; test flash read
+.if 0
+			; old routine
+			lda #$00				; source addr 23:16
 			sta $0214
-			lda #$00				; Addr 15:8
+			lda #$00				; source addr 15:8
 			sta $0215
-			lda #$00				; Addr 7:0
+			lda #$00				; source addr 7:0
 			sta $0216
-			lda #.lobyte($0213)		; display diag text
-			ldy #.hibyte($0213)		;
-			ldx #$00				; 256 bytes
+			lda #.lobyte($0213)		; dest addr
+			ldy #.hibyte($0213)
+			ldx #$00				; count - 0 = 256 bytes
 			jsr _spi_flash_read
 			lda $0213
 			jsr _hexout
@@ -80,6 +87,40 @@ dg_kchk:	lda #$AB				; Read ID instr
 			jsr _hexout
 			lda $021A
 			jsr _hexout
+.else
+			; new routine
+			lda #$00				; source addr 23:16
+			sta $f8
+			lda #$00				; source addr 15:8
+			sta $f9
+			lda #$00				; source addr 7:0
+			sta $fa
+			lda #$00				; count 7:0
+			sta $fc
+			lda #$10				; count 15:8
+			sta $fd
+			lda #.lobyte($C000)		; dest addr
+			sta $fe
+			lda #.hibyte($C000)
+			sta $ff
+			jsr _spi_flash_read
+			lda $C000
+			jsr _hexout
+			lda $C001
+			jsr _hexout
+			lda $C002
+			jsr _hexout
+			lda $C003
+			jsr _hexout
+			lda $C004
+			jsr _hexout
+			lda $C005
+			jsr _hexout
+			lda $C006
+			jsr _hexout
+			lda $C007
+			jsr _hexout
+.endif
 			lda #$0a				; send crlf
 			jsr _output
 			lda #$0d
