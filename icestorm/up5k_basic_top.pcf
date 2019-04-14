@@ -19,13 +19,8 @@ set_io gpio_i[5] 45
 set_io RX 27
 set_io TX 28
 
-# SPI on PMOD for test
-#set_io spi0_mosi 25
-#set_io spi0_miso 26
-#set_io spi0_sclk 21
-#set_io spi0_cs0 23
+set_io pwm_audio 25
 
-# SPI on config flash pins
 set_io spi0_mosi 14
 set_io spi0_miso 17
 set_io spi0_sclk 15

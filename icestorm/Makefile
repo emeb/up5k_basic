@@ -6,8 +6,8 @@
 VPATH = ../src
 
 SRC =	up5k_basic_top.v ../src/tst_6502.v ../src/acia.v ../src/ram_32kb.v \
-		../src/rom_basic_8kB.v ../src/video.v ../src/rom_cg_2kB.v \
-		../src/system_bus.v ../src/wishbone.v ../src/led_pwm.v ../src/ps2.v \
+		../src/video.v ../src/rom_cg_2kB.v ../src/system_bus.v \
+		../src/wishbone.v ../src/led_pwm.v ../src/ps2.v ../src/snd.v \
         ../verilog-6502/cpu.v ../verilog-6502/ALU.v \
         ../osdvu/uart.v
 
@@ -42,7 +42,7 @@ $(FAKE_HEX):
 	$(ICEBRAM) -g 8 2048 > $(FAKE_HEX)
 
 %.json: $(SRC) $(FAKE_HEX)
-	$(YOSYS) -p 'synth_ice40 -top $(PROJ) -json $@' $(SRC)
+	$(YOSYS) -p 'synth_ice40 -dsp -top $(PROJ) -json $@' $(SRC)
 
 %.asc: %.json $(PIN_DEF) 
 	$(NEXTPNR) $(NEXTPNR_ARGS) --$(DEVICE) --json $< --pcf $(PIN_DEF) --asc $@

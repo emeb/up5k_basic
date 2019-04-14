@@ -19,6 +19,9 @@ module up5k_basic_top(
     input RX,
     output TX,
 	
+	// pwm audio
+	output pwm_audio,
+	
 	// SPI0 port
 	inout	spi0_mosi,
 			spi0_miso,
@@ -114,6 +117,8 @@ module up5k_basic_top(
     
         .RX(RX),
         .TX(TX),
+	
+		.pwm_audio(pwm_audio),
 	
 		.spi0_mosi(spi0_mosi),
 		.spi0_miso(spi0_miso),

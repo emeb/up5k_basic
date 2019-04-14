@@ -16,6 +16,8 @@ module tst_6502(
 	input	RX,				// serial RX
 	output	TX,				// serial TX
 	
+	output	pwm_audio,		// 1-bit audio output
+	
 	inout	spi0_mosi,		// SPI core 0
 			spi0_miso,
 			spi0_sclk,
@@ -52,22 +54,14 @@ module tst_6502(
 	
 	// address decode
 	wire ram0_sel = (CPU_AB[15] == 1'b0) ? 1 : 0;
-//`define ROM_BASIC
-`ifdef ROM_BASIC
-	// BASIC in ROM @ A000-BFFF, RAM1 range is 8000-9FFF,C000-CFFF
-	wire ram1_sel = ((CPU_AB[15:12] == 4'h8)||(CPU_AB[15:12] == 4'h9)||(CPU_AB[15:12] == 4'hc)) ? 1 : 0;
-	wire basic_sel = ((CPU_AB[15:12] == 4'ha)||(CPU_AB[15:12] == 4'hb)) ? 1 : 0;
-`else
-	// BASIC in RAM1 - range is 8000-CFFF
 	wire ram1_sel = ((CPU_AB[15:12] >= 4'h8)&&(CPU_AB[15:12] <= 4'hC)) ? 1 : 0;
-	wire basic_sel = 1'b0;
-`endif
 	wire video_sel = ((CPU_AB[15:12] == 4'hd)||(CPU_AB[15:12] == 4'he)) ? 1 : 0;
 	wire acia_sel = (CPU_AB[15:8] == 8'hf0) ? 1 : 0;
 	wire wb_sel = (CPU_AB[15:8] == 8'hf1) ? 1 : 0;
 	wire gpio_sel = (CPU_AB[15:8] == 8'hf2) ? 1 : 0;
 	wire led_sel = (CPU_AB[15:8] == 8'hf3) ? 1 : 0;
 	wire ps2_sel = (CPU_AB[15:8] == 8'hf4) ? 1 : 0;
+	wire snd_sel = (CPU_AB[15:8] == 8'hf5) ? 1 : 0;
 	wire rom_sel = (CPU_AB[15:11] == 5'h1f) ? 1 : 0;
 	
 	// write protect bytes
@@ -97,19 +91,6 @@ module tst_6502(
 		.dout(ram1_do)
 	);
 	
-`ifdef ROM_BASIC
-	// 8kB BASIC ROM @ A000-BFFF
-	wire [7:0] basic_do;
-	ROM_BASIC_8kB ubrom(
-		.clk(clk),
-		.addr(CPU_AB[12:0]),
-		.dout(basic_do)
-	);
-`else
-	// BASIC ROM disabled
-	wire [7:0] basic_do = 8'h00;
-`endif
-
 	// 8kB Video RAM @ D000-EFFF
 	wire [7:0] video_do;
 	wire vid_rdy;
@@ -229,7 +210,19 @@ module tst_6502(
 		.ps2_clk(ps2_clk),		// ps2 clock i/o
 		.ps2_dat(ps2_dat)		// ps2 data i/o
 	);
-			
+	
+	// sound generator
+	wire [7:0] snd_do;
+	snd usnd(
+		.clk(clk),				// system clock
+		.rst(reset),			// system reset
+		.cs(snd_sel),			// chip select
+		.we(CPU_WE),			// write enable
+		.addr(CPU_AB[3:0]),		// address
+		.din(CPU_DO),			// data bus input
+		.dout(snd_do),			// data bus output
+		.pwm_audio(pwm_audio)	// 1-bit DAC output
+	);
 	
 	// 2kB ROM @ f800-ffff
 	reg [7:0] rom_mem[2047:0];
@@ -243,19 +236,19 @@ module tst_6502(
 	reg [9:0] mux_sel;
 	always @(posedge clk)
 		if(CPU_RDY)
-			mux_sel <= {rom_sel,ps2_sel,led_sel,gpio_sel,wb_sel,
-						acia_sel,video_sel,basic_sel,ram1_sel,ram0_sel};
+			mux_sel <= {rom_sel,snd_sel,ps2_sel,led_sel,gpio_sel,
+						wb_sel,acia_sel,video_sel,ram1_sel,ram0_sel};
 	always @(*)
 		casez(mux_sel)
 			10'b0000000001: CPU_DI = ram0_do;
 			10'b000000001z: CPU_DI = ram1_do;
-			10'b00000001zz: CPU_DI = basic_do;
-			10'b0000001zzz: CPU_DI = video_do;
-			10'b000001zzzz: CPU_DI = acia_do;
-			10'b00001zzzzz: CPU_DI = wb_do;
-			10'b0001zzzzzz: CPU_DI = gpio_do;
-			10'b001zzzzzzz: CPU_DI = led_do;
-			10'b01zzzzzzzz: CPU_DI = ps2_do;
+			10'b00000001zz: CPU_DI = video_do;
+			10'b0000001zzz: CPU_DI = acia_do;
+			10'b000001zzzz: CPU_DI = wb_do;
+			10'b00001zzzzz: CPU_DI = gpio_do;
+			10'b0001zzzzzz: CPU_DI = led_do;
+			10'b001zzzzzzz: CPU_DI = ps2_do;
+			10'b01zzzzzzzz: CPU_DI = snd_do;
 			10'b1zzzzzzzzz: CPU_DI = rom_do;
 			default: CPU_DI = rom_do;
 		endcase

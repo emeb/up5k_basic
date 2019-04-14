@@ -17,9 +17,12 @@
 .import		_output
 .import		_strout
 .import		_load
+.import		_save
 .import		BAS_COLDSTART
 .import		BAS_WARMSTART
 .import		BAS_HNDL_CTRLC
+
+.export		output_vec
 
 .segment	"BAS_VEC"
 
@@ -215,7 +218,7 @@ init_tab:
 .addr		_output					; output
 .addr		_ctrl_c					; ctrl-c
 .addr		_load					; load
-.addr		_dummy					; save
+.addr		_save					; save
 
 ; ---------------------------------------------------------------------------
 ; Message Strings

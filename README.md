@@ -5,14 +5,14 @@ includes the following features:
 * Up to 52kB SRAM with optional write protect (using two of the four available SPRAM cores)
 * 8 bits input, 8 bits output
 * 115200bps serial I/O port
-* NTSC composite video with text/glyph and graphic modes, 32kB video RAM and
-  original OSI 2kB character ROM
+* NTSC monochrom composite video with text/glyph and graphic modes,
+  32kB video RAM (4 8kB pages) and original OSI 2kB character ROM
 * 2kB ROM for startup and I/O support
-* 8kB ROM for Ohio Scientific C1P Microsoft BASIC
-  - option to eliminate ROM and load BASIC from spi flash into protected RAM
+* 8kB Ohio Scientific C1P Microsoft BASIC loaded from spi flash into protected RAM
 * SPI port with access to 4MB flash memory
 * LED PWM driver
 * PS/2 Keyboard port
+* 4-voice sound generator with 1-bit sigma-delta output
 
 ![screenshot](screenshot.png)
 
@@ -42,6 +42,9 @@ You will also need the following 6502 tools to build the startup ROM:
 I built this system on a custom up5k board and programmed it with a custom
 USB->SPI board that I built so you will definitely need to tweak the programming
 target of the Makefile in the icestorm directory to match your own hardware.
+Note that the 8kB BASIC ROM must now be loaded into the SPI configuration
+flash memory starting at offset 0x40000 in order for BASIC to run correctly.
+You can find a link to the ROM data at the end of this document.
 
 ## Running BASIC
 
@@ -51,7 +54,7 @@ routines can take characters from either or both.
 
 Load the bitstream an you'll see the boot prompt:
 
-    C/W/M?
+    D/C/W/M?
 
 This is asking if you're doing a cold or warm start. Hit "C" (must be
 uppercase) and then BASIC will start running. It will prompt you:
@@ -121,6 +124,14 @@ March 23, 2019 so make sure you've got the latest from git.
 
 Many FPGAs in the iCE40 family provide hard IP cores for driving RGB LEDs. A
 simple interface to this is provided so the 6502 may control the LED driver.
+
+## Sound Generator
+
+A 4-voice sound generator is provided which supports pitch from 0-32kHz in 
+roughly 0.5Hz steps, choice of waveform (saw/square/triangle/noise) and
+volume control on each voice. Output is via a 1-bit sigma-delta process
+which requires a simple 1-pole RC filter (100ohm + 0.1uf) lowpass filter
+to smooth the digital pulse waveform down to analog audio.
 
 ## Simulating
 

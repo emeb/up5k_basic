@@ -3,7 +3,7 @@
 
 # C and assy source files
 SRC =	init.s util.s acia.s video.s spi.s ledpwm.s ps2.s \
-		cmon.s diag.s basic.s load.s
+		cmon.s diag.s basic.s load.s save.s
 
 # compiler output
 OBJ = rom
