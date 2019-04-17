@@ -46,18 +46,27 @@ Note that the 8kB BASIC ROM must now be loaded into the SPI configuration
 flash memory starting at offset 0x40000 in order for BASIC to run correctly.
 You can find a link to the ROM data at the end of this document.
 
-## Running BASIC
+## Booting up
 
 You will need to connect a PS/2 keyboard to the ps2_clk/dat pins, or a
 115200bps serial terminal port to the TX/RX pins of the FPGA - the data input
-routines can take characters from either or both.
-
-Load the bitstream an you'll see the boot prompt:
+routines can take characters from either or both. Load the bitstream an you'll
+see the boot prompt:
 
     D/C/W/M?
 
-This is asking if you're doing a cold or warm start. Hit "C" (must be
-uppercase) and then BASIC will start running. It will prompt you:
+This is asking which initial service to start.
+
+* D - diagnostics. Currently unused, just enters an infinite loop.
+* C - Cold start BASIC. This is what you'll normally want.
+* W - Warm start BASIC. Use this only after BASIC has been running and the system has been reset.
+* M - Machine Language Monitor.
+
+Hit the key of choice (uppercase only!) to continue.
+
+## Running BASIC
+
+After hitting "C", BASIC will initialize. It will prompt you:
 
     MEMORY SIZE?
 
@@ -75,7 +84,7 @@ how to use this version of BASIC here: https://www.pcjs.org/docs/c1pjs/
 I've upgraded the LOAD and SAVE commands in BASIC from the original bare-bones
 features found in the OSI ROMs which were intended for simple audio tape
 storage. Now, LOAD/SAVE operate on "slots" of up to 32kB stored in the SPI
-Flash memory connected to the FPGA. Use LOAD <n> or SAVE <n> where <n> is an
+Flash memory connected to the FPGA. Use LOAD [n] or SAVE [n] where [n] is an
 integer from 0-99 that refers to the memory slot in which you wish to save
 or load your BASIC program. 
 
@@ -85,10 +94,14 @@ Slots start at 0x050000 in the flash memory space and are spaced every 0x8000.
 Program text is terminated with 0xFF, so just leave unused bytes in the
 default erased state.
 
-## C'MON
+## C'MON Machine Language Monitor
 
-Answering "M" to the boot prompt will start the C'MON monitor which allows
-examining and editing memory contents as well as executing machine code.
+C'MON is a simple hex machine language monitor for the 6502 written by
+Bruce Clark and placed in the public domain which allows examining and
+editing memory contents as well as executing machine code.
+
+Answering "M" to the boot prompt will print a quick help header and start
+the C'MON monitor.
 
 ## Boot ROM
 
