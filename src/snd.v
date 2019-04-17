@@ -106,22 +106,7 @@ module snd(
 				noise[seq] <= 
 					{
 						noise[seq][3:0],		// top 4 are just shifted
-						!(noise[seq][19]^noise[seq][16]), 
-						!(noise[seq][18]^noise[seq][15]), 
-						!(noise[seq][17]^noise[seq][14]), 
-						!(noise[seq][16]^noise[seq][13]), 
-						!(noise[seq][15]^noise[seq][12]), 
-						!(noise[seq][14]^noise[seq][11]), 
-						!(noise[seq][13]^noise[seq][10]), 
-						!(noise[seq][12]^noise[seq][9]), 
-						!(noise[seq][11]^noise[seq][8]), 
-						!(noise[seq][10]^noise[seq][7]), 
-						!(noise[seq][9]^noise[seq][6]), 
-						!(noise[seq][8]^noise[seq][5]), 
-						!(noise[seq][7]^noise[seq][4]), 
-						!(noise[seq][6]^noise[seq][3]), 
-						!(noise[seq][5]^noise[seq][2]), 
-						!(noise[seq][4]^noise[seq][1])
+						~(noise[seq][19:4]^noise[seq][16:1])
 					};
 			
 			// wave shaping

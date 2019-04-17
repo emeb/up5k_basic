@@ -221,7 +221,7 @@ module tst_6502(
 		.addr(CPU_AB[3:0]),		// address
 		.din(CPU_DO),			// data bus input
 		.dout(snd_do),			// data bus output
-		.pwm_audio(pwm_audio)	// 1-bit DAC output
+		.pwm_audio(pwm_audio),	// 1-bit DAC output
 	);
 	
 	// 2kB ROM @ f800-ffff
