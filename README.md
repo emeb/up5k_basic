@@ -70,6 +70,21 @@ Again, hit 'enter' to use the default. It then prints a welcome message and
 is ready to accept BASIC commands and code. You can find out more about
 how to use this version of BASIC here: https://www.pcjs.org/docs/c1pjs/
 
+## Enhancements to BASIC
+
+I've upgraded the LOAD and SAVE commands in BASIC from the original bare-bones
+features found in the OSI ROMs which were intended for simple audio tape
+storage. Now, LOAD/SAVE operate on "slots" of up to 32kB stored in the SPI
+Flash memory connected to the FPGA. Use LOAD <n> or SAVE <n> where <n> is an
+integer from 0-99 that refers to the memory slot in which you wish to save
+or load your BASIC program. 
+
+Memory slots contain raw ASCII text of the programs (un-tokenized), so you
+could conceivably pre-load the SPI Flash with code from an external source.
+Slots start at 0x050000 in the flash memory space and are spaced every 0x8000.
+Program text is terminated with 0xFF, so just leave unused bytes in the
+default erased state.
+
 ## C'MON
 
 Answering "M" to the boot prompt will start the C'MON monitor which allows
@@ -79,15 +94,12 @@ examining and editing memory contents as well as executing machine code.
 
 The 2kB ROM located at $f800 - $ffff contains the various reset/interrupt
 vectors, initialization code, the C'MON monitor and I/O routines needed to
-support BASIC. It's extremely stripped-down and just handles character input,
-output and Control-C checking - the load and save vectors are currently stubbed
-out.
+load and support BASIC.
 
-You can revise this ROM with your own additional support code, or to reduce the
-size of the ROM to free up resources for more RAM - you'll need to edit the
-linker script to change the memory sizes, as well as modify the rom_monitor.s
-file with code changes. The cc65 assembler and linker are required to put it
-all together into the final .hex file needed by the FPGA build.
+You can revise this ROM with your own additional support code - you may need
+to edit the linker script to change the memory sizes. The cc65 assembler and
+linker are required to put it all together into the final .hex file needed by
+the FPGA build.
 
 ## Video
 
@@ -102,7 +114,7 @@ The video generation has been upgraded from the OSI 24x24 display
 
 * Memory arbitration to prevent glitching when the 6502 accesses video RAM
 * 256 x 224 B/W pixel graphics mode
-* 4 pages text or graphics
+* 4 8kB memory pages for text or graphics
 * 32 characters wide by 27 lines high plus overscan using the original OSI
 character generator, complete with all the unique gaming glyphs like tanks,
 cars and spaceships as shown in this rendering:
