@@ -1,16 +1,18 @@
 ; ---------------------------------------------------------------------------
 ; video.s - video interface routines
+; 2019-03-20 E. Brombaugh
 ; ---------------------------------------------------------------------------
 ;
 
+.import		BAS_VIDTXT
+
 .export		_video_init
-.export		_video_out
 
 ; ---------------------------------------------------------------------------
 ; video initializer
 
 .proc _video_init: near
-			lda $FFE0				; initial cursor location
+			lda vidtab				; initial cursor location
 			sta $0200
 			lda #0
 			sta $0203
@@ -28,10 +30,13 @@ vi_loop:	sta $D000,X
 .endproc
 
 ; ---------------------------------------------------------------------------
-; video character output routine
+; table of data for video driver
 
-.proc _video_out: near
-			jsr $BF2D				; Video output routine is in BASIC ROM
-			rts
-.endproc
+.segment  "VIDTAB"
+
+vidtab:
+.byte		$40					; $FFE0 - default starting cursor location
+.byte		$1f					; $FFE1 - default width
+.byte		$00					; $FFE0 - vram size: 0 for 1k, !0 for 2k
+
 

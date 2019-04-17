@@ -1,20 +1,14 @@
 ; ---------------------------------------------------------------------------
 ; util.s - Utility routines
+; 2019-04-05 E. Brombaugh
 ; ---------------------------------------------------------------------------
 ;
 
-.import		_acia_tx_chr
-.import		_acia_rx_chr
-.import		_video_out
-.import		_ps2_rx_nb
-.import		_acia_rx_nb
+.import		_output
 
 .export		_nybout
 .export		_hexout
 .export		_strout
-.export		_chrin
-.export		_input
-.export		_output
 
 .segment	"CODE"
 
@@ -58,39 +52,5 @@ solp:		lda ($fe),y
 			iny
 			bne solp
 sodone:		rts
-.endproc
-
-; ---------------------------------------------------------------------------
-; combined serial & ps2 inputs
-
-.proc _chrin: near
-			jsr _acia_rx_nb			; check for serial input
-			cpx #1
-			beq	chrdone				; return with new char
-			jsr _ps2_rx_nb			; check for ps2 input
-			cpx #1
-chrdone:	rts
-.endproc
-
-; ---------------------------------------------------------------------------
-; BASIC input vector 
-
-.proc _input: near
-			stx $0214				; save X
-in_lp:		jsr _chrin				; get character
-			bne	in_lp				; if none keep waiting
-			ldx $0214				; restore X
-			rts
-.endproc
-
-; ---------------------------------------------------------------------------
-; BASIC output vector 
-
-.proc _output: near
-			pha
-			jsr _video_out
-			pla
-			jsr _acia_tx_chr
-			rts
 .endproc
 
