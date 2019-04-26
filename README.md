@@ -21,7 +21,7 @@ To build this you will need the following FPGA tools
 
 * Icestorm - ice40 FPGA tools
 * Yosys - Synthesis
-* Nextpnr - Place and Route (newer than Mar 23 2019)
+* Nextpnr - Place and Route (version newer than Mar 23 2019 is needed to support IP cores)
 
 Info on these can be found at http://www.clifford.at/icestorm/
 
@@ -94,6 +94,10 @@ Slots start at 0x050000 in the flash memory space and are spaced every 0x8000.
 Program text is terminated with 0xFF, so just leave unused bytes in the
 default erased state.
 
+The BASIC line input routine has been patched to allow use of the the Backspace
+key instead of the underline character. The video text output driver has not
+been altered so the cursor doesn't actually back up.
+
 ## C'MON Machine Language Monitor
 
 C'MON is a simple hex machine language monitor for the 6502 written by
@@ -140,10 +144,8 @@ The iCE40 Ultra Plus features two SPI and two I2C ports as hard IP cores that
 are accessible through a "system bus" that's similar to the popular Wishbone
 standard. I've added a 6502 to Wishbone bridge mapped to addresses $F100-$F1FF
 which provides access to all four cores. Currently only the SPI core at
-addresses $F106-$F10F is connected but I've tested it and added some bare-bones
-access routines in the support ROM which can communicate with the SPI flash
-memory on my test PCB. This requires features that were added to nextpnr on 
-March 23, 2019 so make sure you've got the latest from git.
+addresses $F106-$F10F is connected and it is used to read the BASIC ROM from
+flash into SPRAM and support LOAD and SAVE operations.
 
 ## LED PWM
 
