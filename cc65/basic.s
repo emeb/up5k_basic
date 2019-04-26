@@ -7,11 +7,13 @@
 
 .import		_spi_tx_byte
 .import		_spi_flash_read
+.import		_hexout
 .import		_strout
 .import		_acia_tx_chr
 .import		_acia_rx_nb
 .import		_ps2_rx_nb
 .import		_spi_flash_read
+.import		_spi_flash_rdreg
 .import		_spi_flash_status
 .import		_spi_flash_busy_wait
 .import		_spi_flash_eraseblk
@@ -23,8 +25,6 @@
 .export		BAS_COLDSTART
 .export		BAS_WARMSTART
 
-.include	"flash.s"
-
 ; routines in BASIC that are refrenced here
 BAS_BASE		= $A000		; BASIC base offset
 BAS_WARMSTART	= $A274		; Warm start BASIC
@@ -34,6 +34,7 @@ BAS_GET_INTARG	= $AE05		; get integer argument into BAS_INTLO/BAS_INTHI
 BAS_OUT_ERR		= $A24E		; output error from value in X
 BAS_HNDL_CTRLC	= $A636		; handle Control-C
 BAS_VIDTXT		= $BF2D		; send text to video screen
+BAS_PATCHDST    = $A364		; location to patch backspace
 
 ; variables
 BAS_INTLO		= $AF		; low byte of converted integer
@@ -62,10 +63,6 @@ jmplp:		lda init_tab,X
 			bpl jmplp
 
 ; load & lock RAM1
-			; send wake up cmd to flash
-			lda FLASH_WKUP			; Wake up
-			jsr _spi_tx_byte
-			
 			; read 8kB from flash into RAM
 			lda #$00				; count 7:0
 			sta $fc
@@ -79,6 +76,15 @@ jmplp:		lda init_tab,X
 			ldy #$00				; source addr 15:8
 			lda #$00				; source addr 7:0
 			jsr _spi_flash_read
+			
+			; patch backspace key
+			ldx #$10
+			ldy #$00
+ptchlp:		lda PATCHSRC,y
+			sta BAS_PATCHDST,y
+			iny
+			dex
+			bne ptchlp
 			
 			; protect BASIC
 			lda #$0C
@@ -167,7 +173,7 @@ sv_hiok:	lda BAS_INTLO		; get low byte
 			rts
 .endproc
 
-; ---------------------------------------------------------------------------
+;; ---------------------------------------------------------------------------
 ; LOAD vector - sets up to inject text from flash
 
 .proc _load: near
@@ -262,11 +268,15 @@ ld_done:	sta $f7
 .endproc
 
 ; ---------------------------------------------------------------------------
-; SAVE vector - sets up to inject text from flash
+; SAVE vector - sets up to capture text to flash
 
 .proc _save: near
 ; get slot address
 			jsr _get_slot_addr
+			
+; erase page
+			jsr _spi_flash_eraseblk
+			jsr _spi_flash_busy_wait
 			
 ; init src addr & count
 			lda #.lobyte(flash_buf)	;low source addr
@@ -276,10 +286,6 @@ ld_done:	sta $f7
 			lda #$00
 			sta $fc					; byte counter
 			sta $fd					; page counter
-			
-; erase page
-			jsr _spi_flash_eraseblk
-			jsr _spi_flash_busy_wait
 			
 ; redirect output to special routine
 			lda #.lobyte(sv_chrout)
@@ -302,7 +308,7 @@ sv_rst:		lda #.lobyte(_output)
 			sta output_vec
 			lda #.hibyte(_output)
 			sta output_vec+1
-			
+
 			rts
 .endproc
 
@@ -382,9 +388,8 @@ sv_PRIT3:	INY
 ; ---------------------------------------------------------------------------
 ; write save buffer to flash
 .proc sv_flsh_wrt: near
-			lda $fd					; skip write if pg count > 128
-			cmp #$81
-			bpl sfw_end
+			lda $fd					; skip write if pg count > 127
+			bmi sfw_end
 			jsr _spi_flash_writepg	; send buffer to flash
 			inc $fa					; adjust destination addr 
 			inc $fd					; inc page counter
@@ -395,9 +400,9 @@ sfw_end:	rts
 ; text output redirected to save buffer
 
 .proc sv_chrout: near
-			sta $c100		; save a, x, y
-			stx $c101
-			sty $c102
+			sta temp0		; save a, x, y
+			stx temp1
+			sty temp2
 			ldy $fc			; get count
 			sta ($fe),y		; save in src+cnt
 			iny
@@ -406,14 +411,28 @@ sfw_end:	rts
 			jsr	sv_flsh_wrt	; else write full buffer
 			lda #'-'		; send '-' to output for progress
 			jsr _output
-sv_outdone:	ldy $c102		; restore a, x, y
-			ldx $c101
-			lda $c100
+sv_outdone:	ldy temp2		; restore a, x, y
+			ldx temp1
+			lda temp0
 			rts
 .endproc
 
 loadmsg:
-.byte		10, 13, "RAM1 loaded & locked", 0
+.byte		10, 13, "BASIC loaded, patched and locked", 0
+
+; patch to use backspace instead of underline
+; --------- original ---------- ; --- new -------
+;A364   C9 20      CMP #$20		; cmp #$08	c9 08
+;A366   90 F1      BCC $A359	; beq $a34b	f0 e3
+;A368   C9 7D      CMP #$7D		; cmp #$20	c9 20
+;A36A   B0 ED      BCS $A359	; bcc $a359	90 ed
+;A36C   C9 40      CMP #$40		; cmp #$7d	c9 7d
+;A36E   F0 E1      BEQ $A351	; bcs $a359	b0 e9
+;A370   C9 5F      CMP #$5F		; cmp #$40	c9 40
+;A372   F0 D7      BEQ $A34B	; beq $a351	f0 dd
+PATCHSRC:
+.byte		$c9, $08, $f0, $e3, $c9, $20, $90, $ed
+.byte		$c9, $7d, $b0, $e9, $c9, $40, $f0, $dd
 
 ; ---------------------------------------------------------------------------
 ; BASIC vector init table
@@ -426,7 +445,10 @@ init_tab:
 .addr		_save					; save
 
 .segment	"HI_RAM"
-flash_buf:	.res $100			; 256 bytes flash data buffer
+flash_buf:	.res $100				; 256 bytes flash data buffer
+temp0:		.res 1					; temp vars
+temp1:		.res 1					; temp vars
+temp2:		.res 1					; temp vars
 
 ; ---------------------------------------------------------------------------
 ; table of vectors for BASIC

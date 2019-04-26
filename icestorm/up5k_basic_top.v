@@ -53,6 +53,8 @@ module up5k_basic_top(
 	//);
 	
 	wire clk;
+`ifdef V01
+	// for v0.1 board
 	SB_PLL40_CORE pll_inst (
 		.REFERENCECLK(clk_16),
 		.PLLOUTCORE(clk),
@@ -66,7 +68,24 @@ module up5k_basic_top(
 		.SDI(),
 		.SDO(),
 		.SCLK()
-	);  
+	);
+`else
+	// for 0.2 board
+	SB_PLL40_PAD pll_inst (
+		.PACKAGEPIN(clk_16),
+		.PLLOUTCORE(clk),
+		.PLLOUTGLOBAL(),
+		.EXTFEEDBACK(),
+		.DYNAMICDELAY(8'h00),
+		.RESETB(1'b1),
+		.BYPASS(1'b0),
+		.LATCHINPUTVALUE(),
+		.LOCK(),
+		.SDI(),
+		.SDO(),
+		.SCLK()
+	);
+`endif
 	// Fin=16, Fout=16
 	defparam pll_inst.DIVR = 4'b0000;
 	defparam pll_inst.DIVF = 7'b0111111;

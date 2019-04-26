@@ -16,15 +16,30 @@
 .define		SPIRXDR		$0e			; RX data reg (ro)
 .define		SPICSR		$0f			; Chip Select reg
 
-.include "flash.s"
-
 .export		_spi_init
 .export		_spi_tx_byte
 .export		_spi_flash_read
+.export		_spi_flash_rdreg
 .export		_spi_flash_status
 .export		_spi_flash_busy_wait
 .export		_spi_flash_eraseblk
 .export		_spi_flash_writepg
+
+; Flash commands
+.define		FLASH_WRPG	#$02		; write page
+.define		FLASH_READ	#$03		; read data
+.define		FLASH_RSR1	#$05		; read status reg 1
+.define		FLASH_RSR2	#$35		; read status reg 2
+.define		FLASH_RSR3	#$15		; read status reg 3
+.define		FLASH_WSR1	#$01		; write status reg 1
+.define		FLASH_WSR2	#$31		; write status reg 2
+.define		FLASH_WSR3	#$11		; write status reg 3
+.define		FLASH_WEN	#$06		; write enable
+.define		FLASH_EB32	#$52		; erase block 32k
+.define		FLASH_GBUL	#$98		; global unlock
+.define		FLASH_WKUP	#$AB		; wakeup
+.define		FLASH_ERST	#$66		; enable reset
+.define		FLASH_RST	#$99		; reset
 
 .segment	"CODE"
 
@@ -40,7 +55,11 @@ si_lp:		ldx spi_init_tab,y		; get reg
 			sta SPI0_BASE, x		; save to IP core
 			iny
 			bne	si_lp				; max 128 regs
-si_done:	rts
+			
+si_done:	
+			jsr _spi_flash_init		; initialize the SPI Flash chip
+			
+			rts
 .endproc
 
 ; ---------------------------------------------------------------------------
@@ -80,6 +99,35 @@ si_done:	rts
 .endproc
 
 ; ---------------------------------------------------------------------------
+; spi flash init - wakeup
+
+.proc _spi_flash_init: near
+; set up the flash memory
+			; send wake up cmd to flash (FPGA init may power it down)
+			lda FLASH_WKUP			; Wake up
+			jsr _spi_tx_byte
+			rts
+.endproc
+
+; ---------------------------------------------------------------------------
+; send header - used for read, write and erase
+; expects cmd in A, addr in f9-fb
+
+.proc _spi_flash_hdr: near
+			ldx #$00				; point to source addr
+			ldy #$04				; four byte read header
+hdr_lp:		pha						; temp save data
+			jsr spi_tx_wait			; wait for tx ready
+			pla
+			sta SPI0_BASE+SPITXDR	; send tx
+			lda $f9,x				; get next tx byte
+			inx
+			dey
+			bne hdr_lp				; loop over all 4 bytes
+			rts
+.endproc
+
+; ---------------------------------------------------------------------------
 ; spi flash read - 64kB max
 ; low dest addr in $fe, high dest addr in $ff
 ; low count in $fc, hight count in $fd
@@ -107,17 +155,8 @@ si_done:	rts
 			sta SPI0_BASE+SPICSR
 			
 ; send header w/ read cmd + source addr
-			ldx #$00				; point to source addr
-			ldy #$04				; four byte read header
 			lda FLASH_READ			; read command
-sfr_tlp:	pha						; temp save data
-			jsr spi_tx_wait			; wait for tx ready
-			pla
-			sta SPI0_BASE+SPITXDR	; send tx
-			lda $f9,x				; get next tx byte
-			inx
-			dey
-			bne sfr_tlp				; back to tx loop
+			jsr _spi_flash_hdr
 			
 ; wait for tx ready before starting rx
 			jsr spi_tx_wait			; wait for tx ready
@@ -145,13 +184,14 @@ sfr_skp0:	inc $fc					; inc count
 .endproc
 
 ; ---------------------------------------------------------------------------
-; spi flash get status
+; spi flash read reg - expects cmd in A
 
-.proc _spi_flash_status: near
+.proc _spi_flash_rdreg: near
+			pha						; save cmd
 			lda #$fe				; lower cs0
 			sta SPI0_BASE+SPICSR
 			jsr spi_tx_wait			; wait for tx ready
-			lda FLASH_RSR1			; send status read cmd
+			pla						; restore cmd
 			sta SPI0_BASE+SPITXDR
 			jsr spi_rx_wait			; wait for rx ready
 			lda SPI0_BASE+SPIRXDR	; dummy read to clear RX 
@@ -162,6 +202,14 @@ sfr_skp0:	inc $fc					; inc count
 			sta SPI0_BASE+SPICSR
 			lda SPI0_BASE+SPIRXDR	; get rx
 			rts			
+.endproc
+
+; ---------------------------------------------------------------------------
+; spi flash get status
+
+.proc _spi_flash_status: near
+			lda FLASH_RSR1			; status 1 read cmd
+			jmp _spi_flash_rdreg	; send and get data - let sub return
 .endproc
 
 ; ---------------------------------------------------------------------------
@@ -179,15 +227,6 @@ sfr_skp0:	inc $fc					; inc count
 ; block addr in $f9-$fb (low/mid/hi)
 
 .proc _spi_flash_eraseblk: near
-
-; write enable for unlock
-			lda FLASH_WEN
-			jsr _spi_tx_byte
-
-; global unlock
-			lda FLASH_GBUL
-			jsr _spi_tx_byte
-			
 ; write enable for erase
 			lda FLASH_WEN
 			jsr _spi_tx_byte
@@ -195,18 +234,8 @@ sfr_skp0:	inc $fc					; inc count
 ; send erase command
 			lda #$fe				; lower cs0
 			sta SPI0_BASE+SPICSR
-			jsr spi_tx_wait			; wait for tx ready
 			lda FLASH_EB32			; send 32k erase cmd
-			sta SPI0_BASE+SPITXDR
-			jsr spi_tx_wait			; wait for tx ready
-			lda $f9					; send high addr
-			sta SPI0_BASE+SPITXDR
-			jsr spi_tx_wait			; wait for tx ready
-			lda $fa					; send mid addr
-			sty SPI0_BASE+SPITXDR
-			jsr spi_tx_wait			; wait for tx ready
-			lda $fb					; send low addr
-			sta SPI0_BASE+SPITXDR
+			jsr _spi_flash_hdr
 			jsr spi_rx_wait			; wait for rx ready
 			lda #$ff				; raise cs0
 			sta SPI0_BASE+SPICSR
@@ -221,7 +250,7 @@ sfr_skp0:	inc $fc					; inc count
 
 .proc _spi_flash_writepg: near
 ; write enable for write
-			lda #$06
+			lda FLASH_WEN
 			jsr _spi_tx_byte
 			
 ; lower cs0
@@ -229,17 +258,8 @@ sfr_skp0:	inc $fc					; inc count
 			sta SPI0_BASE+SPICSR
 			
 ; send header w/ write cmd + dest addr
-			ldx #$00				; point to source addr
-			ldy #$04				; four byte write header
 			lda FLASH_WRPG			; page write command
-sfw_tlp:	pha						; temp save data
-			jsr spi_tx_wait			; wait for tx ready
-			pla
-			sta SPI0_BASE+SPITXDR	; send tx
-			lda $f9,x				; get next tx byte
-			inx
-			dey
-			bne sfw_tlp				; back to tx loop
+			jsr _spi_flash_hdr
 
 ; write data from src addr
 			ldy #$00				; beginning offset

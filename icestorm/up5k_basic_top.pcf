@@ -1,11 +1,13 @@
-set_io clk_16 44
+# for rev 0.1 of up5k_usb board use clk_16 = 44
+# for rev 0.2 of up5k_usb board use clk_16 = 35
+set_io clk_16 35
 
 set_io gpio_o[0] 38
 set_io gpio_o[1] 42
 set_io gpio_o[2] 36
 set_io gpio_o[3] 37
 set_io gpio_o[4] 34
-set_io gpio_o[5] 35
+set_io gpio_o[5] 44
 set_io gpio_o[6] 31
 set_io gpio_o[7] 32
 
