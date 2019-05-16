@@ -1,7 +1,7 @@
 // ram_32kb.v - 32k byte inferred RAM
 // 03-11-18 E. Brombaugh
 
-module RAM_32kB(
+module ram_32kb(
     input clk,
     input sel,
     input we,

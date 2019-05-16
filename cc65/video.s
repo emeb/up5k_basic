@@ -18,12 +18,17 @@
 			sta $0203
 			sta $0205
 			sta $0206				; no video delay
-			lda #$20				; space
 			ldx #0
-vi_loop:	sta $D000,X
+vi_loop:	lda #$20				; space in char data region
+			sta $D000,X
 			sta $D100,X
 			sta $D200,X
 			sta $D300,X
+			lda #$F5				; default indices in color region
+			sta $E000,X
+			sta $E100,X
+			sta $E200,X
+			sta $E300,X
 			inx
 			bne vi_loop
 			rts

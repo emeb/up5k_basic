@@ -24,18 +24,20 @@ module snd(
 	input [3:0] addr,		// register select
 	input [7:0] din,		// data bus input
 	output reg [7:0] dout,	// data bus output
-	output pwm_audio		// 1-bit DAC output
+	output snd_l,			// left 1-bit DAC output
+	output snd_r,			// right 1-bit DAC output
+	output snd_nmute		// /mute output
 );
 	// write control registers
-	reg [7:0] f_lo[1:0];
-	reg [15:0] frq[1:0];
-	reg [2:0] wave[1:0];
-	reg [7:0] gain[1:0];
-	reg [1:0] i;
+	reg [7:0] f_lo[3:0];
+	reg [15:0] frq[3:0];
+	reg [2:0] wave[3:0];
+	reg [7:0] gain[3:0];
+	integer i;
 	always @(posedge clk)
 		if(rst)
 		begin
-			for(i=2'b00;i<=2'b11;i=i+2'b01)
+			for(i=0;i<=3;i=i+1)
 			begin
 				f_lo[i] <= 8'h00;
 				frq[i] <= 16'h0000;
@@ -66,10 +68,10 @@ module snd(
 		$readmemh("../src/sine.hex", sine_lut, 0);
 		
 	// NCOs and SD acc
-	reg [1:0] seq, seq_d1, seq_d2;
-	reg [23:0] phs[1:0];
+	reg [1:0] seq, seq_d1;
+	reg [23:0] phs[3:0];
 	reg carry;
-	reg [19:0] noise[1:0];
+	reg [19:0] noise[3:0];
 	reg [16:0] seq_phs;
 	reg [15:0] sine;
 	reg [15:0] wv;
@@ -81,7 +83,7 @@ module snd(
 		begin
 			seq <= 2'b00;
 			
-			for(i=2'b00;i<=2'b11;i=i+2'b01)
+			for(i=0;i<=3;i=i+1)
 				phs[i] <= 24'h000000;
 			
 			sd_acc <= 17'h00000;
@@ -129,5 +131,7 @@ module snd(
 		end
 		
 	// sigma-delta output is carry output of accum
-	assign pwm_audio = sd_acc[16];
+	assign snd_l = sd_acc[16];
+	assign snd_r = sd_acc[16];
+	assign snd_nmute = 1'b1;
 endmodule

@@ -2,42 +2,47 @@
 # for rev 0.2 of up5k_usb board use clk_16 = 35
 set_io clk_16 35
 
-set_io gpio_o[0] 38
-set_io gpio_o[1] 42
-set_io gpio_o[2] 36
-set_io gpio_o[3] 37
-set_io gpio_o[4] 34
-set_io gpio_o[5] 44
-set_io gpio_o[6] 31
-set_io gpio_o[7] 32
+set_io vga_r[0] 6
+set_io vga_r[1] 4
+set_io vga_g[0] 3
+set_io vga_g[1] 2
+set_io vga_b[0] 48
+set_io vga_b[1] 47
+set_io vga_vs 46
+set_io vga_hs 45
 
-set_io gpio_i[0] 6
-set_io gpio_i[1] 3
-set_io gpio_i[2] 2
-set_io gpio_i[3] 48
-set_io gpio_i[4] 46
-set_io gpio_i[5] 45
+set_io RX 26
+set_io TX 25
 
-set_io RX 27
-set_io TX 28
+set_io NRST 21
 
-set_io pwm_audio 25
+set_io audio_nmute 23
+set_io audio_l 20
+set_io audio_r 19
 
 set_io spi0_mosi 14
 set_io spi0_miso 17
 set_io spi0_sclk 15
 set_io spi0_cs0 16
 
-set_io ps2_dat 4
-set_io ps2_clk 47
+set_io ps2_dat 28
+set_io ps2_clk 27
 
-set_io luma 19
-set_io sync 20
+set_io vdac[0] 32
+set_io vdac[1] 31
+set_io vdac[2] 36
+set_io vdac[3] 34
+
+#set_io pmod[0] 42
+#set_io pmod[1] 44
+#set_io pmod[2] 37
+#set_io pmod[3] 38
 
 set_io tst[0] 43
 set_io tst[1] 18
 set_io tst[2] 13
 set_io tst[3] 12
+
 
 set_io RGB0 39
 set_io RGB1 40

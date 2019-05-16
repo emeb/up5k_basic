@@ -5,7 +5,7 @@ includes the following features:
 * Up to 52kB SRAM with optional write protect (using two of the four available SPRAM cores)
 * 8 bits input, 8 bits output
 * 115200bps serial I/O port
-* NTSC monochrom composite video with text/glyph and graphic modes,
+* NTSC color composite video with text/glyph and graphic modes,
   32kB video RAM (4 8kB pages) and original OSI 2kB character ROM
 * 2kB ROM for startup and I/O support
 * 8kB Ohio Scientific C1P Microsoft BASIC loaded from spi flash into protected RAM
@@ -14,7 +14,7 @@ includes the following features:
 * PS/2 Keyboard port
 * 4-voice sound generator with 1-bit sigma-delta output
 
-![screenshot](screenshot.png)
+![board](doc/board.png)
 
 ## prerequisites
 To build this you will need the following FPGA tools
@@ -120,23 +120,21 @@ the FPGA build.
 
 ## Video
 
-This is a simple NTSC composite video generator which
-is based on the original Ohio Scientific C1P system. The luma and sync output
-bits should be combined by running sync thru a 560 ohm resistor and luma thru a
-330 ohm resistor to a common node driving a 75 ohm baseband composite video
-load. This will generate a 262-line 60fps progressive-scanned NTSC-compatible
-signal which should work with most modern NTSC-capable video displays.
+This is an NTSC color composite video generator which is a significant
+improvement over the original OSI Challenger 1P/Superboard II video that
+the system started out with. Features are:
 
-The video generation has been upgraded from the OSI 24x24 display
-
-* Memory arbitration to prevent glitching when the 6502 accesses video RAM
-* 256 x 224 B/W pixel graphics mode
+* 32x28 text/glyph mode using the OSI 8x8 character generator
+* Separate foreground / background colors per-character in text/glyph mode
+* 256x224 two-color pixel graphics mode
 * 4 8kB memory pages for text or graphics
-* 32 characters wide by 27 lines high plus overscan using the original OSI
-character generator, complete with all the unique gaming glyphs like tanks,
-cars and spaceships as shown in this rendering:
 
-![characters](chargen1x.png)
+![characters](doc/chargen1x.png)
+
+The 75 ohm baseband composite video signal is synthesized by means of a 4-bit
+weighted-R DAC driven directly by four bits from the FPGA.
+
+![DAC](doc/video_dac.png)
 
 ## SPI
 
@@ -159,6 +157,8 @@ roughly 0.5Hz steps, choice of waveform (saw/square/triangle/noise) and
 volume control on each voice. Output is via a 1-bit sigma-delta process
 which requires a simple 1-pole RC filter (100ohm + 0.1uf) lowpass filter
 to smooth the digital pulse waveform down to analog audio.
+
+![Audio](doc/audio_filter.png)
 
 ## Simulating
 

@@ -1,7 +1,7 @@
 // rom_cg_2kB.v - 2k byte ROM with video character generator contents
 // 03-11-18 E. Brombaugh
 
-module ROM_CG_2kB(
+module rom_cg_2kB(
     input clk,
     input [10:0] addr,
     output reg [7:0] dout

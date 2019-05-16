@@ -11,6 +11,7 @@ module ps2(
 	input addr,				// register select
 	input [7:0] din,		// data bus input
 	output reg [7:0] dout,	// data bus output
+	output [3:0] diag,		// diagnostic output
 	inout ps2_clk,			// ps2 clock pin
 	inout ps2_dat			// ps2 data pin
 );
@@ -48,13 +49,13 @@ module ps2(
 			if(ps2_clk_ena)
 			begin
 				// Start or count or wait
-				if(rx_state)
+				if(|rx_state)
 					rx_state <= rx_state - 4'h1;
 				else if(ps2_dat_sync == 1'b0)
 					rx_state <= ST_DAT0;
 				
 				// shift in data lsb first
-				if(rx_state)
+				if(|rx_state)
 					rx_sreg <= {ps2_dat_sync,rx_sreg[8:1]};
 				
 				// final processing
@@ -119,7 +120,7 @@ module ps2(
 		if(cs & !we)
 		begin
 			if(!addr)
-				dout <= {rx_parerr,rx_frmerr,rx_ovfl,rx_rdy};	// read status
+				dout <= {4'h0,rx_parerr,rx_frmerr,rx_ovfl,rx_rdy};	// read status
 			else
 				dout <= ascii;	// read data
 		end
@@ -162,6 +163,8 @@ module ps2(
 		.D_IN_1()
 	);
 
+	// hook up diagnostics
+	assign diag = {ps2_clk_ena,ps2_dat_sync,rx_done,valid};
 endmodule
 
 //
@@ -185,7 +188,7 @@ module ps2_decode(
 	
 	// regs
 	reg [1:0] state;
-	reg break, e0_code, caps_lock, control, shift;
+	reg brk_flag, e0_code, caps_lock, control, shift;
 	reg [7:0] ps2_code;
 	
 	// state machine
@@ -193,7 +196,7 @@ module ps2_decode(
 		if(rst)
 		begin
 			state <= ST_READY;
-			break <= 1'b0;
+			brk_flag <= 1'b0;
 			e0_code <= 1'b0;
 			caps_lock <= 1'b0;
 			control <= 1'b0;
@@ -216,7 +219,7 @@ module ps2_decode(
 					// process new scancode
 					if(code == 8'hf0)
 					begin
-						break <=1'b1;
+						brk_flag <=1'b1;
 						state <= ST_READY;
 					end
 					else if(code == 8'he0)
@@ -233,15 +236,15 @@ module ps2_decode(
 				ST_TRANSLATE:
 				begin
 					// reset flags
-					break <= 1'b0;
+					brk_flag <= 1'b0;
 					e0_code <= 1'b0;
 					
 					// handle modifier keys
 					case(code)
-						8'h58: caps_lock <= break ? caps_lock : !caps_lock;	// caps lock code
-						8'h14: control <= !break;	// control (l or r w/ e0)
-						8'h12: shift <= !break;	// left shift
-						8'h59: shift <= !break;	// right shift
+						8'h58: caps_lock <= brk_flag ? caps_lock : !caps_lock;	// caps lock code
+						8'h14: control <= !brk_flag;	// control (l or r w/ e0)
+						8'h12: shift <= !brk_flag;	// left shift
+						8'h59: shift <= !brk_flag;	// right shift
 					endcase
 					
 					// control keys
@@ -404,8 +407,8 @@ module ps2_decode(
 							endcase
 					end
 					
-					// if break then return to ready, else output
-					state <= break ? ST_READY : ST_OUTPUT;
+					// if brk_flag then return to ready, else output
+					state <= brk_flag ? ST_READY : ST_OUTPUT;
 				end
 				
 				ST_OUTPUT:
@@ -420,7 +423,7 @@ module ps2_decode(
 				begin
 					// self-correction
 					state <= ST_READY;
-					break <= 1'b0;
+					brk_flag <= 1'b0;
 					e0_code <= 1'b0;
 					caps_lock <= 1'b0;
 					control <= 1'b0;
@@ -429,4 +432,3 @@ module ps2_decode(
 			endcase
 		end
 endmodule
-

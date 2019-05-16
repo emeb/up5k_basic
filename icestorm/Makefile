@@ -6,8 +6,9 @@
 VPATH = ../src
 
 SRC =	up5k_basic_top.v ../src/tst_6502.v ../src/acia.v ../src/ram_32kb.v \
-		../src/video.v ../src/rom_cg_2kB.v ../src/system_bus.v \
-		../src/wishbone.v ../src/led_pwm.v ../src/ps2.v ../src/snd.v \
+		../src/video.v ../src/vram_32kb.v ../src/satsu.v ../src/rom_cg_2kB.v \
+		../src/system_bus.v ../src/wishbone.v ../src/led_pwm.v \
+		../src/ps2.v ../src/snd.v \
         ../verilog-6502/cpu.v ../verilog-6502/ALU.v \
         ../osdvu/uart.v
 
@@ -25,7 +26,8 @@ YOSYS = /usr/local/bin/yosys
 NEXTPNR = nextpnr-ice40
 #NEXTPNR_ARGS = --pre-pack $(SDC) --ignore-loops
 #NEXTPNR_ARGS = --pre-pack $(SDC)
-NEXTPNR_ARGS = --pre-pack $(SDC) --placer heap --seed 1020
+#NEXTPNR_ARGS = --pre-pack $(SDC) --placer heap --seed 1020
+NEXTPNR_ARGS = --pre-pack $(SDC) --placer heap
 ICEPACK = icepack
 ICETIME = icetime
 ICEPROG = iceprog
@@ -67,6 +69,9 @@ recode:
     
 prog: $(PROJ).bin
 	$(CDCPROG) -p /dev/ttyACM0 $<
+
+flash: $(PROJ).bin
+	$(CDCPROG) -w -p /dev/ttyACM0 $<
 
 sudo-prog: $(PROJ).bin
 	@echo 'Executing prog as root!!!'

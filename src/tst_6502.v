@@ -5,10 +5,10 @@
 
 module tst_6502(
 	input	clk,			// 16MHz CPU clock
+	input   clk_2x,			// 32MHz pixel clock
 	input	reset,			// high-true reset
 	
-	output  luma,			// B/W video outputs
-			sync,
+	inout   [3:0] vdac,		// composite video DAC
 	
 	output reg [7:0] gpio_o,	// GPIO port
 	input [7:0] gpio_i,
@@ -16,7 +16,9 @@ module tst_6502(
 	input	RX,				// serial RX
 	output	TX,				// serial TX
 	
-	output	pwm_audio,		// 1-bit audio output
+	output	snd_l,			// left 1-bit audio output
+	output	snd_r,			// right 1-bit audio output
+	output	snd_nmute,		// audio /mute output
 	
 	inout	spi0_mosi,		// SPI core 0
 			spi0_miso,
@@ -32,9 +34,6 @@ module tst_6502(
 	
 	output	[3:0] tst		// diagnostic
 );
-	// stuff needed throughout
-	reg [7:0] sysctl;
-	
 	// The 6502
 	wire [15:0] CPU_AB;
 	reg [7:0] CPU_DI;
@@ -62,14 +61,15 @@ module tst_6502(
 	wire led_sel = (CPU_AB[15:8] == 8'hf3) ? 1 : 0;
 	wire ps2_sel = (CPU_AB[15:8] == 8'hf4) ? 1 : 0;
 	wire snd_sel = (CPU_AB[15:8] == 8'hf5) ? 1 : 0;
+	wire vctl_sel = (CPU_AB[15:8] == 8'hf6) ? 1 : 0;
 	wire rom_sel = (CPU_AB[15:11] == 5'h1f) ? 1 : 0;
 	
-	// write protect bytes
-	reg [7:0] ram0_wp, ram1_wp;
+	// system control and write protect bytes
+	reg [7:0] sysctl, ram0_wp, ram1_wp;
 	
 	// 32kB RAM @ 0000-7FFF
 	wire [7:0] ram0_do;
-	RAM_32kB uram0(
+	ram_32kb uram0(
 		.clk(clk),
 		.sel(ram0_sel),
 		.we(CPU_WE),
@@ -79,9 +79,9 @@ module tst_6502(
 		.dout(ram0_do)
 	);
 	
-	// 8kB+4kB RAM @ 8000-9FFF, C000-CFFF
+	// 20kB RAM @ 8000-CFFF
 	wire [7:0] ram1_do;
-	RAM_32kB uram1(
+	ram_32kb uram1(
 		.clk(clk),
 		.sel(ram1_sel),
 		.we(CPU_WE),
@@ -91,22 +91,20 @@ module tst_6502(
 		.dout(ram1_do)
 	);
 	
-	// 8kB Video RAM @ D000-EFFF
-	wire [7:0] video_do;
-	wire vid_rdy;
-	VIDEO uvid(
+	// 8kB Video RAM @ D000-EFFF, video control @ F600-F6FF
+	wire [7:0] video_do, vctl_do;
+	video uvid(
 		.clk(clk),				// system clock
+		.clk_2x(clk_2x),		// pixel clock
 		.reset(reset),			// system reset
-		.mode(sysctl[2]),		// text/graphic mode control
-		.bank(sysctl[1:0]),		// VRAM bank select
-		.sel(video_sel),		// chip select
+		.sel_ram(video_sel),	// video RAM select
+		.sel_ctl(vctl_sel),		// video control select
 		.we(CPU_WE),			// write enable
 		.addr(CPU_AB[12:0]),	// address
 		.din(CPU_DO),			// data bus input
-		.dout(video_do),		// data bus output
-		.luma(luma),			// video luminance
-		.sync(sync),			// video sync
-		.rdy(vid_rdy)			// processor stall
+		.ram_dout(video_do),	// ram data bus output
+		.ctl_dout(vctl_do),		// ctl data bus output
+		.vdac(vdac)				// video DAC
 	);
 		
 	// 256B ACIA @ F000-F0FF
@@ -128,7 +126,6 @@ module tst_6502(
 	// 256B Wishbone bus master and SB IP cores @ F100-F1FF
 	wire [7:0] wb_do;
 	wire wb_irq, wb_rdy;
-	wire spi_moe, spi_soe, spi_sckoe;
 	system_bus usysbus(
 		.clk(clk),				// system clock
 		.rst(reset),			// system reset
@@ -149,7 +146,7 @@ module tst_6502(
 	assign CPU_IRQ = acia_irq | wb_irq;
 	
 	// combine RDYs
-	assign CPU_RDY = vid_rdy & wb_rdy;
+	assign CPU_RDY = wb_rdy;
 	
 	// 256B GPIO & sysctl @ F200-F2FF
 	reg [7:0] gpio_do;
@@ -182,7 +179,7 @@ module tst_6502(
 				2'b11: gpio_do <= ram1_wp;
 			endcase
 			
-	// LED PWM controller
+	// LED PWM controller @ F300-F3FF
 	wire [7:0] led_do;
 	led_pwm uledpwm(
 		.clk(clk),				// system clock
@@ -197,8 +194,9 @@ module tst_6502(
 		.rgb2(rgb2)				// rgb2 pin
 	);
 			
-	// PS/2 Keyboard port
+	// PS/2 Keyboard port @ F400 - F4FF
 	wire [7:0] ps2_do;
+	wire [3:0] ps2_diag;
 	ps2 ups2(
 		.clk(clk),				// system clock
 		.rst(reset),			// system reset
@@ -207,11 +205,12 @@ module tst_6502(
 		.addr(CPU_AB[0]),		// address
 		.din(CPU_DO),			// data bus input
 		.dout(ps2_do),			// data bus output
+		.diag(ps2_diag),		// diagnostics
 		.ps2_clk(ps2_clk),		// ps2 clock i/o
 		.ps2_dat(ps2_dat)		// ps2 data i/o
 	);
 	
-	// sound generator
+	// sound generator @ F500 - F5FF
 	wire [7:0] snd_do;
 	snd usnd(
 		.clk(clk),				// system clock
@@ -221,7 +220,9 @@ module tst_6502(
 		.addr(CPU_AB[3:0]),		// address
 		.din(CPU_DO),			// data bus input
 		.dout(snd_do),			// data bus output
-		.pwm_audio(pwm_audio),	// 1-bit DAC output
+		.snd_l(snd_l),			// left 1-bit DAC output
+		.snd_r(snd_r),			// right 1-bit DAC output
+		.snd_nmute(snd_nmute)	// audio /mute output
 	);
 	
 	// 2kB ROM @ f800-ffff
@@ -236,26 +237,28 @@ module tst_6502(
 	reg [9:0] mux_sel;
 	always @(posedge clk)
 		if(CPU_RDY)
-			mux_sel <= {rom_sel,snd_sel,ps2_sel,led_sel,gpio_sel,
+			mux_sel <= {rom_sel,vctl_sel,snd_sel,ps2_sel,led_sel,gpio_sel,
 						wb_sel,acia_sel,video_sel,ram1_sel,ram0_sel};
 	always @(*)
 		casez(mux_sel)
-			10'b0000000001: CPU_DI = ram0_do;
-			10'b000000001z: CPU_DI = ram1_do;
-			10'b00000001zz: CPU_DI = video_do;
-			10'b0000001zzz: CPU_DI = acia_do;
-			10'b000001zzzz: CPU_DI = wb_do;
-			10'b00001zzzzz: CPU_DI = gpio_do;
-			10'b0001zzzzzz: CPU_DI = led_do;
-			10'b001zzzzzzz: CPU_DI = ps2_do;
-			10'b01zzzzzzzz: CPU_DI = snd_do;
-			10'b1zzzzzzzzz: CPU_DI = rom_do;
+			11'b00000000001: CPU_DI = ram0_do;
+			11'b0000000001z: CPU_DI = ram1_do;
+			11'b000000001zz: CPU_DI = video_do;
+			11'b00000001zzz: CPU_DI = acia_do;
+			11'b0000001zzzz: CPU_DI = wb_do;
+			11'b000001zzzzz: CPU_DI = gpio_do;
+			11'b00001zzzzzz: CPU_DI = led_do;
+			11'b0001zzzzzzz: CPU_DI = ps2_do;
+			11'b001zzzzzzzz: CPU_DI = snd_do;
+			11'b01zzzzzzzzz: CPU_DI = vctl_do;
+			11'b1zzzzzzzzzz: CPU_DI = rom_do;
 			default: CPU_DI = rom_do;
 		endcase
 		
 	// hook up diagnostics
-	assign tst[0] = clk;
-	assign tst[1] = wb_sel;
-	assign tst[2] = CPU_RDY;
-	assign tst[3] = 1'b0;
+	//assign tst[0] = clk;
+	//assign tst[1] = wb_sel;
+	//assign tst[2] = CPU_RDY;
+	//assign tst[3] = 1'b0;
+	assign tst = ps2_diag;
 endmodule

@@ -18,7 +18,7 @@ module acia(
 	
 	// load control register
 	reg [1:0] counter_divide_select, transmit_control;
-	reg [2:0] word_select;
+	reg [2:0] word_select; // dummy
 	reg receive_interrupt_enable;
 	always @(posedge clk)
 	begin

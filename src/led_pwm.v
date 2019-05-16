@@ -35,6 +35,7 @@ module led_pwm(
 	wire LED0, LED1, LED2;
 	wire led_on;
 	SB_LEDDA_IP PWMgen_inst (
+		//.LEDDRST(rst),	// "doesn't really exist"
 		.LEDDCS(cs),
 		.LEDDCLK(clk),
 		.LEDDDAT7(din[7]),
@@ -51,7 +52,6 @@ module led_pwm(
 		.LEDDADDR0(addr[0]),
 		.LEDDDEN(we),
 		.LEDDEXE(mycr[6]),
-		//.LEDDRST(rst),	// "doesn't really exist"
 		.PWMOUT0(LED0),
 		.PWMOUT1(LED1),
 		.PWMOUT2(LED2),
@@ -63,7 +63,7 @@ module led_pwm(
 		.CURRENT_MODE("0b1"),
 		.RGB0_CURRENT("0b000001"),
 		.RGB1_CURRENT("0b000001"),
-		.RGB2_CURRENT("0b000001")
+		.RGB2_CURRENT("0b000011")
 	) RGBA_DRIVER (
 		.CURREN(mycr[4]),
 		.RGBLEDEN(mycr[5]),

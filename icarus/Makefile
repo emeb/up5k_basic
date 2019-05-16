@@ -3,8 +3,8 @@
 
 # sources
 SOURCES = 	tb_tst_6502.v ../src/tst_6502.v ../src/acia.v ../src/ram_32kb.v \
-			../src/video.v ../src/rom_cg_2kB.v ../src/system_bus.v \
-			../src/wishbone.v ../src/led_pwm.v ../src/ps2.v ../src/snd.v \
+			../src/rom_basic_8kB.v ../src/video.v ../src/rom_cg_2kB.v \
+			../src/system_bus.v ../src/wishbone.v ../src/led_pwm.v \
 			../verilog-6502/ALU.v ../verilog-6502/cpu.v \
 			../osdvu/uart.v
         
