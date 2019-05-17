@@ -1,5 +1,5 @@
 # up5k_basic
-A small 6502 system with MS BASIC in ROM. This system
+A small 6502 system with MS BASIC built in a Lattice UltraPlus FPGA. This system
 includes the following features:
 
 * Up to 52kB SRAM with optional write protect (using two of the four available SPRAM cores)
@@ -136,7 +136,22 @@ weighted-R DAC driven directly by four bits from the FPGA.
 
 ![DAC](doc/video_dac.png)
 
-## SPI
+## PS/2 Keyboard
+
+A PS/2 keyboard port is provided which (along with the ACIA) feeds the ASCII
+input.
+
+![PS/2](doc/PS_2.png)
+
+## Reset
+
+An active-low "soft" reset input will reset the 6502 system without reconfiguring
+the FPGA. This will return the system the the "D/C/W/M" prompt and allow a warm-
+start into BASIC for recovery from some situations.
+
+![Reset](doc/reset.png)
+
+## SPI Flash
 
 The iCE40 Ultra Plus features two SPI and two I2C ports as hard IP cores that
 are accessible through a "system bus" that's similar to the popular Wishbone
