@@ -30,13 +30,16 @@ module video(
 	localparam CB_ND = 248;		// end of colorburst - CB_ST + 2.5us
 	
 	// control register and color LUT
-	reg [7:0] ctrl, color_lut[15:0];
+	reg [7:0] ctrl, hires, color_lut[15:0];
 	// write
 	always @(posedge clk)
 		if(reset)
 		begin
 			// text mode, bank 0
 			ctrl <= 8'h00;
+			
+			// hires color mapping
+			hires <= 8'hF5;
 			
 			// 3-bits luma, 3-bits chroma phase, 2-bits chroma gain
 			color_lut[0]  <= 8'b000_000_00;	// black
@@ -59,17 +62,23 @@ module video(
 		else if((we == 1'b1) && (sel_ctl == 1'b1))
 		begin
 			if(addr[4]==1'b0)
-				ctrl <= din;
+				case(addr[3:0])
+					4'h0: ctrl <= din;
+					4'h1: hires <= din;
+				endcase
 			else
 				color_lut[addr[3:0]] <= din;
 		end
 		
 	// read
-	reg [7:0] ctl_dout;
 	always @(posedge clk)
 		if((we == 1'b0) && (sel_ctl == 1'b1))
 			if(addr[4]==1'b0)
-				ctl_dout <= ctrl;
+				case(addr[3:0])
+					4'h0: ctl_dout <= ctrl;
+					4'h1: ctl_dout <= hires;
+					default: ctl_dout <= 8'h00;
+				endcase
 			else
 				ctl_dout <= color_lut[addr[3:0]];
 
@@ -96,7 +105,7 @@ module video(
 			// counters
 			if(hcnt == MAX_H)
 			begin
-				hcnt <= 10'd0;
+				hcnt <= 11'd0;
 				if(vcnt == MAX_V)
 					vcnt <= 9'd0;
 				else
@@ -276,10 +285,10 @@ module video(
 		.dout(cg_dout)
 	);
 	
-	// pipeline character color data
+	// pipeline character color data or hires default
 	reg [7:0] color_idx;
 	always @(posedge clk_2x)
-		color_idx <= mode ? 8'h10 : raw_ram_word[15:8];
+		color_idx <= mode ? hires : raw_ram_word[15:8];
 	
 	// graphics mode pass-thru
 	reg [7:0] gfx_dout;

@@ -6,19 +6,25 @@
 
 module tb_tst_6502;
     reg clk;
+    reg clk_2x;
     reg reset;
+	wire [3:0] vdac;
 	wire [7:0] gpio_o;
 	reg [7:0] gpio_i;
 	reg RX;
     wire TX;
-	wire luma, sync;
-	wire CPU_IRQ, CPU_RDY;
+	wire snd_l, snd_r, snd_nmute;
     wire spi0_mosi, spi0_miso, spi0_sclk, spi0_cs0;
+	wire ps2_clk, ps2_dat;
+	wire rgb0, rgb1, rgb2;
+	wire [3:0] tst;
 	
-    // clock source
+    // clock sources
     always
-        #125 clk = ~clk;
-    
+        #31.25 clk = ~clk;
+    always
+		#15.625 clk_2x = ~clk_2x;
+	
     // reset
     initial
     begin
@@ -29,6 +35,7 @@ module tb_tst_6502;
         
         // init regs
         clk = 1'b0;
+        clk_2x = 1'b0;
         reset = 1'b1;
         RX = 1'b1;
         
@@ -44,19 +51,26 @@ module tb_tst_6502;
     
     // Unit under test
     tst_6502 uut(
-        .clk(clk),              // 4.028MHz dot clock
+        .clk(clk),              // 16MHz CPU clock
+        .clk_2x(clk_2x),        // 32MHz Video clock
         .reset(reset),          // Low-true reset
-		.luma(luma),			// video luminance
-		.sync(sync),			// video sync
-        .gpio_o(gpio_o),        // gpio output
-        .gpio_i(gpio_i),        // gpio input
-        .RX(RX),                // serial input
-        .TX(TX),                // serial output
+		.vdac(vdac),			// video DAC
+        .gpio_o(gpio_o),        // gpio
+        .gpio_i(gpio_i),
+        .RX(RX),                // serial
+        .TX(TX),
+		.snd_l(snd_l),			// audio
+		.snd_r(snd_r),
+		.snd_nmute(snd_nmute),
 		.spi0_mosi(spi0_mosi),	// SPI core 0
 		.spi0_miso(spi0_miso),
 		.spi0_sclk(spi0_sclk),
 		.spi0_cs0(spi0_cs0),
-		.CPU_IRQ(CPU_IRQ),		// diagnostic
-		.CPU_RDY(CPU_RDY)		// diagnostic
+		.ps2_clk(ps2_clk),		// PS/2 Keyboard port
+		.ps2_dat(ps2_dat),
+		.rgb0(rgb0),			// LED drivers
+		.rgb1(rgb1),
+		.rgb2(rgb2),
+		.tst(tst)				// diagnostic port
     );
 endmodule

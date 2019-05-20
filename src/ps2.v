@@ -75,14 +75,15 @@ module ps2(
 	
 	// Decode from scan codes to ASCII
 	wire [7:0] ascii;
-	wire valid;
+	wire valid, caps_lock;
 	ps2_decode udecode(
 		.clk(clk),
 		.rst(rst | clrerr),
 		.ena(rx_done),
 		.code(rx_code),
 		.ascii(ascii),
-		.valid(valid)
+		.valid(valid),
+		.caps_lock(caps_lock)
 	);
 		
 	// RX ready and overflow bits
@@ -120,7 +121,7 @@ module ps2(
 		if(cs & !we)
 		begin
 			if(!addr)
-				dout <= {4'h0,rx_parerr,rx_frmerr,rx_ovfl,rx_rdy};	// read status
+				dout <= {3'h0,caps_lock,rx_parerr,rx_frmerr,rx_ovfl,rx_rdy};	// read status
 			else
 				dout <= ascii;	// read data
 		end
@@ -178,7 +179,8 @@ module ps2_decode(
 	input ena,				// input valid
 	input [7:0] code,		// code input
 	output reg [7:0] ascii,	// decoded output
-	output reg valid		// output valid
+	output reg valid,		// output valid
+	output reg caps_lock	// state of caps_lock
 );
 	// states
 	localparam ST_READY = 2'b00;
@@ -188,8 +190,7 @@ module ps2_decode(
 	
 	// regs
 	reg [1:0] state;
-	reg brk_flag, e0_code, caps_lock, control, shift;
-	reg [7:0] ps2_code;
+	reg brk_flag, e0_code, control, shift;
 	
 	// state machine
 	always @(posedge clk)

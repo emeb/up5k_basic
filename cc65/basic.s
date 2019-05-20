@@ -418,7 +418,7 @@ sv_outdone:	ldy temp2		; restore a, x, y
 .endproc
 
 loadmsg:
-.byte		10, 13, "BASIC loaded, patched and locked", 0
+.byte		" ",10,13,"BASIC loaded, patched and locked", 0
 
 ; patch to use backspace instead of underline
 ; --------- original ---------- ; --- new -------

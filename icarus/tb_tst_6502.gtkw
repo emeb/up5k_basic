@@ -1,112 +1,134 @@
 [*]
 [*] GTKWave Analyzer v3.3.94 (w)1999-2018 BSI
-[*] Sun Mar 24 06:26:47 2019
+[*] Sat May 18 15:42:14 2019
 [*]
-[dumpfile] "/home/ericb/Engineering/KBADC/lattice/up5k_basic/icarus/tb_tst_6502.vcd"
-[dumpfile_mtime] "Sun Mar 24 06:10:06 2019"
-[dumpfile_size] 1818133
-[savefile] "/home/ericb/Engineering/KBADC/lattice/up5k_basic/icarus/tb_tst_6502.gtkw"
+[dumpfile] "/home/ericb/KBADC/lattice/up5k_basic/icarus/tb_tst_6502.vcd"
+[dumpfile_mtime] "Sat May 18 14:55:40 2019"
+[dumpfile_size] 144577015
+[savefile] "/home/ericb/KBADC/lattice/up5k_basic/icarus/tb_tst_6502.gtkw"
 [timestart] 0
-[size] 1366 669
+[size] 1508 856
 [pos] -1 -1
-*-23.000000 14875000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-31.000000 515453125 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb_tst_6502.
-[treeopen] tb_tst_6502.uut.
-[treeopen] tb_tst_6502.uut.uvid.
 [sst_width] 219
-[signals_width] 187
+[signals_width] 221
 [sst_expanded] 1
-[sst_vpaned_height] 144
+[sst_vpaned_height] 237
+@200
+-TB
+@28
+tb_tst_6502.RX
+tb_tst_6502.TX
+tb_tst_6502.clk
+tb_tst_6502.clk_2x
+@22
+tb_tst_6502.gpio_i[7:0]
+tb_tst_6502.gpio_o[7:0]
+@28
+tb_tst_6502.ps2_clk
+tb_tst_6502.ps2_dat
+tb_tst_6502.reset
+tb_tst_6502.rgb0
+tb_tst_6502.rgb1
+tb_tst_6502.rgb2
+tb_tst_6502.snd_l
+tb_tst_6502.snd_nmute
+tb_tst_6502.snd_r
+tb_tst_6502.spi0_cs0
+tb_tst_6502.spi0_miso
+tb_tst_6502.spi0_mosi
+tb_tst_6502.spi0_sclk
+@22
+tb_tst_6502.tst[3:0]
+@8023
+tb_tst_6502.vdac[3:0]
+@200
+-UUT
 @22
 tb_tst_6502.uut.CPU_AB[15:0]
 tb_tst_6502.uut.CPU_DI[7:0]
 tb_tst_6502.uut.CPU_DO[7:0]
 @28
-tb_tst_6502.uut.CPU_WE
 tb_tst_6502.uut.CPU_IRQ
 tb_tst_6502.uut.CPU_RDY
+tb_tst_6502.uut.CPU_WE
+tb_tst_6502.uut.RX
+tb_tst_6502.uut.TX
+@22
+tb_tst_6502.uut.acia_do[7:0]
+@28
+tb_tst_6502.uut.acia_irq
+tb_tst_6502.uut.acia_sel
 tb_tst_6502.uut.clk
+tb_tst_6502.uut.clk_2x
 @22
 tb_tst_6502.uut.gpio_do[7:0]
 tb_tst_6502.uut.gpio_i[7:0]
 tb_tst_6502.uut.gpio_o[7:0]
-tb_tst_6502.uut.ram_do[7:0]
+@28
+tb_tst_6502.uut.gpio_sel
+@22
+tb_tst_6502.uut.led_do[7:0]
+@28
+tb_tst_6502.uut.led_sel
+@22
+tb_tst_6502.uut.mux_sel[9:0]
+@28
+tb_tst_6502.uut.ps2_clk
+tb_tst_6502.uut.ps2_dat
+@22
+tb_tst_6502.uut.ps2_diag[3:0]
+tb_tst_6502.uut.ps2_do[7:0]
+@28
+tb_tst_6502.uut.ps2_sel
+@22
+tb_tst_6502.uut.ram0_do[7:0]
+@28
+tb_tst_6502.uut.ram0_sel
+@22
+tb_tst_6502.uut.ram0_wp[7:0]
+tb_tst_6502.uut.ram1_do[7:0]
+@28
+tb_tst_6502.uut.ram1_sel
+@22
+tb_tst_6502.uut.ram1_wp[7:0]
 @28
 tb_tst_6502.uut.reset
+tb_tst_6502.uut.rgb0
+tb_tst_6502.uut.rgb1
+tb_tst_6502.uut.rgb2
 @22
 tb_tst_6502.uut.rom_do[7:0]
-tb_tst_6502.uut.acia_do[7:0]
+@28
+tb_tst_6502.uut.rom_sel
+@22
+tb_tst_6502.uut.snd_do[7:0]
+@28
+tb_tst_6502.uut.snd_l
+tb_tst_6502.uut.snd_nmute
+tb_tst_6502.uut.snd_r
+tb_tst_6502.uut.snd_sel
+tb_tst_6502.uut.spi0_cs0
+tb_tst_6502.uut.spi0_miso
+tb_tst_6502.uut.spi0_mosi
+tb_tst_6502.uut.spi0_sclk
+@22
+tb_tst_6502.uut.sysctl[7:0]
+tb_tst_6502.uut.tst[3:0]
+tb_tst_6502.uut.vctl_do[7:0]
+@28
+tb_tst_6502.uut.vctl_sel
+@22
+tb_tst_6502.uut.vdac[3:0]
+tb_tst_6502.uut.video_do[7:0]
+@28
+tb_tst_6502.uut.video_sel
+@22
 tb_tst_6502.uut.wb_do[7:0]
 @28
-tb_tst_6502.uut.RX
-tb_tst_6502.uut.TX
-tb_tst_6502.uut.ram_sel
-tb_tst_6502.uut.gpio_sel
-tb_tst_6502.uut.acia_sel
+tb_tst_6502.uut.wb_irq
+tb_tst_6502.uut.wb_rdy
 tb_tst_6502.uut.wb_sel
-tb_tst_6502.uut.rom_sel
-tb_tst_6502.luma
-tb_tst_6502.sync
-@200
--video
-@28
-tb_tst_6502.uut.uvid.reset
-tb_tst_6502.uut.uvid.clk
-@22
-tb_tst_6502.uut.uvid.hcnt[9:0]
-tb_tst_6502.uut.uvid.vcnt[8:0]
-@28
-tb_tst_6502.uut.uvid.hs
-tb_tst_6502.uut.uvid.vs
-tb_tst_6502.uut.uvid.active
-tb_tst_6502.uut.uvid.dcnt[1:0]
-tb_tst_6502.uut.uvid.pixena
-tb_tst_6502.uut.uvid.vload
-@22
-tb_tst_6502.uut.uvid.haddr[4:0]
-@28
-tb_tst_6502.uut.uvid.cline[2:0]
-@22
-tb_tst_6502.uut.uvid.vaddr[4:0]
-tb_tst_6502.uut.uvid.vid_addr[9:0]
-@201
--sysbus
-@22
-tb_tst_6502.uut.usysbus.addr[7:0]
-@28
-tb_tst_6502.uut.usysbus.clk
-tb_tst_6502.uut.usysbus.cs
-@22
-tb_tst_6502.uut.usysbus.din[7:0]
-tb_tst_6502.uut.usysbus.dout[7:0]
-@28
-tb_tst_6502.uut.usysbus.irq
-tb_tst_6502.uut.usysbus.mcsno_00
-tb_tst_6502.uut.usysbus.mcsnoe_00
-tb_tst_6502.uut.usysbus.mi_0
-tb_tst_6502.uut.usysbus.mo_0
-tb_tst_6502.uut.usysbus.moe_0
-tb_tst_6502.uut.usysbus.rdy
-tb_tst_6502.uut.usysbus.rst
-tb_tst_6502.uut.usysbus.sbacko
-@22
-tb_tst_6502.uut.usysbus.sbadri[7:0]
-tb_tst_6502.uut.usysbus.sbdati[7:0]
-tb_tst_6502.uut.usysbus.sbdato[7:0]
-@28
-tb_tst_6502.uut.usysbus.sbrwi
-tb_tst_6502.uut.usysbus.sbstbi
-tb_tst_6502.uut.usysbus.scki_0
-tb_tst_6502.uut.usysbus.scko_0
-tb_tst_6502.uut.usysbus.sckoe_0
-tb_tst_6502.uut.usysbus.scsni_0
-tb_tst_6502.uut.usysbus.si_0
-tb_tst_6502.uut.usysbus.so_0
-tb_tst_6502.uut.usysbus.soe_0
-tb_tst_6502.uut.usysbus.spi0_cs0
-tb_tst_6502.uut.usysbus.spi0_miso
-tb_tst_6502.uut.usysbus.spi0_mosi
-tb_tst_6502.uut.usysbus.spi0_sclk
-tb_tst_6502.uut.usysbus.we
 [pattern_trace] 1
 [pattern_trace] 0
