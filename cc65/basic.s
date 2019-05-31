@@ -113,10 +113,10 @@ chrdone:	rts
 ; BASIC input vector 
 
 .proc _input: near
-			stx $0214				; save X
+			stx invec_x				; save X
 in_lp:		jsr _chrin				; get character
 			bne	in_lp				; if none keep waiting
-			ldx $0214				; restore X
+			ldx invec_x				; restore X
 			rts
 .endproc
 
@@ -449,6 +449,7 @@ flash_buf:	.res $100				; 256 bytes flash data buffer
 temp0:		.res 1					; temp vars
 temp1:		.res 1					; temp vars
 temp2:		.res 1					; temp vars
+invec_x:	.res 1					; X reg save for input vec
 
 ; ---------------------------------------------------------------------------
 ; table of vectors for BASIC

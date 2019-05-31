@@ -5,7 +5,8 @@
 SOURCES =	tb_tst_6502.v ../src/tst_6502.v ../src/acia.v ../src/ram_32kb.v \
 			../src/video.v ../src/vram_32kb.v ../src/satsu.v ../src/rom_cg_2kB.v \
 			../src/system_bus.v ../src/wishbone.v ../src/led_pwm.v \
-			../src/ps2.v ../src/snd.v \
+			../src/ps2.v ../src/ps2_tx.v ../src/ps2_rx.v ../src/ps2_decode.v \
+			../src/snd.v \
 			../verilog-6502/cpu.v ../verilog-6502/ALU.v \
 			../osdvu/uart.v
         

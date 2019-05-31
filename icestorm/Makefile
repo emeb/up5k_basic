@@ -8,7 +8,8 @@ VPATH = ../src
 SRC =	up5k_basic_top.v ../src/tst_6502.v ../src/acia.v ../src/ram_32kb.v \
 		../src/video.v ../src/vram_32kb.v ../src/satsu.v ../src/rom_cg_2kB.v \
 		../src/system_bus.v ../src/wishbone.v ../src/led_pwm.v \
-		../src/ps2.v ../src/snd.v \
+		../src/ps2.v ../src/ps2_tx.v ../src/ps2_rx.v ../src/ps2_decode.v \
+		../src/snd.v \
         ../verilog-6502/cpu.v ../verilog-6502/ALU.v \
         ../osdvu/uart.v
 
@@ -23,6 +24,7 @@ SDC = up5k_basic_top.sdc
 DEVICE = up5k
 
 YOSYS = /usr/local/bin/yosys
+YOSYS_SYNTH_ARGS = -dsp -relut -dffe_min_ce_use 4
 NEXTPNR = nextpnr-ice40
 #NEXTPNR_ARGS = --pre-pack $(SDC) --ignore-loops
 #NEXTPNR_ARGS = --pre-pack $(SDC)
@@ -44,7 +46,7 @@ $(FAKE_HEX):
 	$(ICEBRAM) -g 8 2048 > $(FAKE_HEX)
 
 %.json: $(SRC) $(FAKE_HEX)
-	$(YOSYS) -p 'synth_ice40 -dsp -top $(PROJ) -json $@' $(SRC)
+	$(YOSYS) -p 'synth_ice40 $(YOSYS_SYNTH_ARGS) -top $(PROJ) -json $@' $(SRC)
 
 %.asc: %.json $(PIN_DEF) 
 	$(NEXTPNR) $(NEXTPNR_ARGS) --$(DEVICE) --json $< --pcf $(PIN_DEF) --asc $@

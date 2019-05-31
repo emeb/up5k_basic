@@ -53,10 +53,10 @@ module video(
 			color_lut[8]  <= 8'b101_100_00;	// lt gray
 			color_lut[9]  <= 8'b101_110_11;	// pink
 			color_lut[10] <= 8'b101_111_11;	// lt org
-			color_lut[11] <= 8'b101_111_10;	// lt yellow
+			color_lut[11] <= 8'b110_000_10;	// lt yellow
 			color_lut[12] <= 8'b101_001_11;	// lt green
-			color_lut[13] <= 8'b101_100_11;	// lt blue
-			color_lut[14] <= 8'b101_101_11;	// lt purple
+			color_lut[13] <= 8'b101_011_11;	// lt blue
+			color_lut[14] <= 8'b101_100_11;	// lt purple
 			color_lut[15] <= 8'b111_000_00;	// white
 		end
 		else if((we == 1'b1) && (sel_ctl == 1'b1))

@@ -202,7 +202,7 @@ module tst_6502(
 		.rst(reset),			// system reset
 		.cs(ps2_sel),			// chip select
 		.we(CPU_WE),			// write enable
-		.addr(CPU_AB[0]),		// address
+		.addr(CPU_AB[1:0]),		// address
 		.din(CPU_DO),			// data bus input
 		.dout(ps2_do),			// data bus output
 		.diag(ps2_diag),		// diagnostics
