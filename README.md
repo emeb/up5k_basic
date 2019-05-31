@@ -11,7 +11,7 @@ includes the following features:
 * 8kB Ohio Scientific C1P Microsoft BASIC loaded from spi flash into protected RAM
 * SPI port with access to 4MB flash memory
 * LED PWM driver
-* PS/2 Keyboard port
+* PS/2 Keyboard port with tx and rx capability
 * 4-voice sound generator with 1-bit sigma-delta output
 
 ![board](doc/board.png)
@@ -139,7 +139,8 @@ weighted-R DAC driven directly by four bits from the FPGA.
 ## PS/2 Keyboard
 
 A PS/2 keyboard port is provided which (along with the ACIA) feeds the ASCII
-input.
+input. Host to keyboard communication is supported and the caps lock LED should
+toggle on/off to indicate status.
 
 ![PS/2](doc/PS_2.png)
 
