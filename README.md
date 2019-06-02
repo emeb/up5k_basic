@@ -118,6 +118,15 @@ to edit the linker script to change the memory sizes. The cc65 assembler and
 linker are required to put it all together into the final .hex file needed by
 the FPGA build.
 
+## Serial I/O
+
+Originally this project relied on a FOSS USART coded in Verilog that I came
+across elsewhere on github. I discovered that there were some issues with it
+so it has been replaced with a design that I built myself and which seems to
+behave much more reliably while also using fewer resources. The serial I/O
+parameters are fixed at 115200bps 8/N/1 but the data rate can be easily
+changed over a wide range with simple tweaks to parameters in the acia.v file.
+
 ## Video
 
 This is an NTSC color composite video generator which is a significant

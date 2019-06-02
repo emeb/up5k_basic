@@ -1,4 +1,4 @@
-// acia.v - strippped-down version of MC6850 ACIA wrapped around FOSS UART
+// acia.v - strippped-down version of MC6850 ACIA with home-made TX/RX
 // 03-02-19 E. Brombaugh
 
 module acia(
@@ -10,14 +10,22 @@ module acia(
 	input rx,				// serial receive
 	input [7:0] din,		// data bus input
 	output reg [7:0] dout,	// data bus output
-	output tx,				// serial transmit
+	output tx,				// serial tx_start
 	output irq				// high-true interrupt request
 );
-	// generate transmit signal on write to register 1
-	wire transmit = cs & rs & we;
+	// hard-coded bit-rate
+	localparam sym_rate = 115200;
+    localparam clk_freq = 16000000;
+    localparam sym_cnt = clk_freq / sym_rate;
+	localparam SCW = $clog2(sym_cnt);
+	
+	wire [SCW-1:0] sym_cntr = sym_cnt;
+	
+	// generate tx_start signal on write to register 1
+	wire tx_start = cs & rs & we;
 	
 	// load control register
-	reg [1:0] counter_divide_select, transmit_control;
+	reg [1:0] counter_divide_select, tx_start_control;
 	reg [2:0] word_select; // dummy
 	reg receive_interrupt_enable;
 	always @(posedge clk)
@@ -26,13 +34,13 @@ module acia(
 		begin
 			counter_divide_select <= 2'b00;
 			word_select <= 3'b000;
-			transmit_control <= 2'b00;
+			tx_start_control <= 2'b00;
 			receive_interrupt_enable <= 1'b0;
 		end
 		else if(cs & ~rs & we)
 			{
 				receive_interrupt_enable,
-				transmit_control,
+				tx_start_control,
 				word_select,
 				counter_divide_select
 			} <= din;
@@ -42,7 +50,7 @@ module acia(
 	wire acia_rst = rst | (counter_divide_select == 2'b11);
 	
 	// load dout with either status or rx data
-	wire [7:0] rx_byte, status;
+	wire [7:0] rx_dat, status;
 	always @(posedge clk)
 	begin
 		if(rst)
@@ -54,37 +62,37 @@ module acia(
 			if(cs & ~we)
 			begin
 				if(rs)
-					dout <= rx_byte;
+					dout <= rx_dat;
 				else
 					dout <= status;
 			end
 		end
 	end
 	
-	// tx empty is cleared when transmit starts, cleared when is_transmitting deasserts
+	// tx empty is cleared when tx_start starts, cleared when tx_busy deasserts
 	reg txe;
-	wire is_transmitting;
-	reg prev_is_transmitting;
+	wire tx_busy;
+	reg prev_tx_busy;
 	always @(posedge clk)
 	begin
 		if(rst)
 		begin
 			txe <= 1'b1;
-			prev_is_transmitting <= 1'b0;
+			prev_tx_busy <= 1'b0;
 		end
 		else
 		begin
-			prev_is_transmitting <= is_transmitting;
+			prev_tx_busy <= tx_busy;
 			
-			if(transmit)
+			if(tx_start)
 				txe <= 1'b0;
-			else if(prev_is_transmitting & ~is_transmitting)
+			else if(prev_tx_busy & ~tx_busy)
 				txe <= 1'b1;
 		end
 	end
 	
-	// rx full is set when received pulses, cleared when data reg read
-	wire received;
+	// rx full is set when rx_stb pulses, cleared when data reg read
+	wire rx_stb;
 	reg rxf;
 	always @(posedge clk)
 	begin
@@ -92,7 +100,7 @@ module acia(
 			rxf <= 1'b0;
 		else
 		begin
-			if(received)
+			if(rx_stb)
 				rxf <= 1'b1;
 			else if(cs & rs & ~we)
 				rxf <= 1'b0;
@@ -100,40 +108,48 @@ module acia(
 	end
 	
 	// assemble status byte
-	wire recv_error;
+	wire rx_err;
 	assign status = 
 	{
 		irq,				// bit 7 = irq - forced inactive
 		1'b0,				// bit 6 = parity error - unused
-		recv_error,			// bit 5 = overrun error - same as all errors
-		recv_error,			// bit 4 = framing error - same as all errors
+		rx_err,			    // bit 5 = overrun error - same as all errors
+		rx_err,			    // bit 4 = framing error - same as all errors
 		1'b0,				// bit 3 = /CTS - forced active
 		1'b0,				// bit 2 = /DCD - forced active
-		txe,				// bit 1 = transmit empty
+		txe,				// bit 1 = tx_start empty
 		rxf					// bit 0 = receive full
 	};
-		
-	// instantiate the simplified UART core
-	wire is_receiving;	// unused
-    uart #(
-        .baud_rate(115200),            // default is 9600
-        .sys_clk_freq(16000000)      // default is 100000000
-     )
-    uart_i(
-        .clk(clk),                        // The master clock for this module
-        .rst(acia_rst),                   // Synchronous reset
-        .rx(rx),                          // Incoming serial line
-        .tx(tx),                          // Outgoing serial line
-        .transmit(transmit),              // Signal to transmit
-        .tx_byte(din),                    // Byte to transmit       
-        .received(received),              // Indicated that a byte has been received
-        .rx_byte(rx_byte),                // Byte received
-        .is_receiving(is_receiving),      // Low when receive line is idle
-        .is_transmitting(is_transmitting),// Low when transmit line is idle
-        .recv_error(recv_error)           // Indicates error in receiving packet.
-    );
 	
+	// Async Receiver
+	acia_rx #(
+		.SCW(SCW),				// rate counter width
+		.sym_cnt(sym_cnt)		// rate count value
+	)
+	my_rx(
+		.clk(clk),				// system clock
+		.rst(acia_rst),			// system reset
+		.rx_serial(rx),		    // raw serial input
+		.rx_dat(rx_dat),        // received byte
+		.rx_stb(rx_stb),        // received data available
+		.rx_err(rx_err)         // received data error
+	);
+	
+	// Transmitter
+	acia_tx #(
+		.SCW(SCW),              // rate counter width
+		.sym_cnt(sym_cnt)       // rate count value
+	)
+	my_tx(
+		.clk(clk),				// system clock
+		.rst(acia_rst),			// system reset
+		.tx_dat(din),           // transmit data byte
+		.tx_start(tx_start),    // trigger transmission
+		.tx_serial(tx),         // tx serial output
+		.tx_busy(tx_busy)       // tx is active (not ready)
+	);
+
 	// generate IRQ
-	assign irq = (rxf & receive_interrupt_enable) | ((transmit_control==2'b01) & txe);
+	assign irq = (rxf & receive_interrupt_enable) | ((tx_start_control==2'b01) & txe);
 
 endmodule
